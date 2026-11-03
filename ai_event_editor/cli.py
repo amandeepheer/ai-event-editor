@@ -34,6 +34,8 @@ def main():
     p.add_argument("--music")
     p.add_argument("--duration", type=int, default=60, help="30 to 300 seconds")
     p.add_argument("--style", default=None, help="Style slug")
+    p.add_argument("--dynamic-mix", action="store_true", help="Auto mix cinematic, energetic, fast cuts and emotional")
+    p.add_argument("--mix-energy", type=int, default=75, help="Mix energy 0-100")
     p.add_argument("--styles-dir", default="my-styles")
     p.add_argument("--xml", default="recap.xml")
     p.add_argument("--plan", default="edit-plan.json")
@@ -66,7 +68,11 @@ def main():
         shots = [Shot.from_dict(x) for x in json.loads(Path(args.shots).read_text(encoding="utf-8"))]
         beat_times = json.loads(Path(args.beats).read_text(encoding="utf-8")) if args.beats else []
         style = load_style(args.style, args.styles_dir) if args.style else None
-        result = plan(shots, beat_times, duration=args.duration, style=style)
+        from .dynamic_mix import DynamicMix
+        mix = DynamicMix(energy=args.mix_energy) if args.dynamic_mix else None
+        if mix is not None and style is not None:
+            parser.error("Choose --style or --dynamic-mix, not both")
+        result = plan(shots, beat_times, duration=args.duration, style=style, mix=mix)
         Path(args.plan).write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(f"Plan: {args.plan}")
         print(f"Premiere XML candidate: {export(result, args.xml, args.music)}")
