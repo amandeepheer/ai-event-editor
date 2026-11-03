@@ -44,6 +44,18 @@ class VisionWorker:
             results.append({"category": category, "confidence": values[category], "scores": values})
         return results
 
+def frame_quality(path: str) -> float:
+    """Lightweight brightness/detail heuristic; not a trained aesthetic model."""
+    from PIL import Image, ImageStat, ImageFilter
+    with Image.open(path) as source:
+        image = source.convert("L")
+        image.thumbnail((320, 180))
+        brightness = ImageStat.Stat(image).mean[0] / 255
+        edges = ImageStat.Stat(image.filter(ImageFilter.FIND_EDGES)).mean[0] / 255
+    exposure = max(0.0, 1.0 - abs(brightness - 0.48) / 0.48)
+    detail = min(1.0, edges * 9)
+    return round(max(0.0, min(1.0, 0.55 * exposure + 0.45 * detail)), 4)
+
 def sample_times(duration: float, interval: float = 4.0) -> list[float]:
     if duration <= 0:
         return []
@@ -84,6 +96,6 @@ def analyze_folder(folder: str, max_clips: int | None = None, worker=None) -> li
                 end = min(duration, timestamp + 1.5)
                 candidates.append({"path": clip["path"], "start": start, "end": end,
                                    "category": result["category"], "confidence": result["confidence"],
-                                   "quality": 0.5, "model": getattr(worker, "model_name", "test-worker"),
+                                   "quality": frame_quality(paths[index][1]), "model": getattr(worker, "model_name", "test-worker"),
                                    "review_required": True})
     return candidates
