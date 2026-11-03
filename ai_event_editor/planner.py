@@ -1,6 +1,7 @@
 """Duration-adjustable, frame-based event recap planner."""
 from dataclasses import dataclass, replace
 from typing import Any
+from math import isfinite
 from .beat_sync import beat_frames, choose_cut
 from .speed_effects import speed_effect
 
@@ -21,8 +22,9 @@ class Shot:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Shot":
-        shot = cls(**data)
-        if shot.category not in ORDER or not shot.path or shot.start < 0 or shot.end <= shot.start or not 0 <= shot.quality <= 1 or shot.fps <= 0:
+        allowed = ("path", "category", "start", "end", "quality", "fps")
+        shot = cls(**{key: data[key] for key in allowed if key in data})
+        if shot.category not in ORDER or not shot.path or shot.start < 0 or shot.end <= shot.start or not 0 <= shot.quality <= 1 or not isfinite(shot.fps) or shot.fps <= 0:
             raise ValueError("Invalid shot data")
         return shot
 
@@ -81,7 +83,7 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
             if frames < 1:
                 raise ValueError("Source shot too short")
             effect = speed_effect(category, shot.fps, energy, FPS) if auto_speed else {"kind": "normal", "speed": 1.0, "requires_render": False}
-            segments.append({"speed_effect": effect, "path": shot.path, "category": category, "timeline_start": position, "duration_frames": frames, "source_in_frame": round(shot.start * FPS), "source_fps": shot.fps, "speed": 1.0, "edit_style": section_styles[index].slug if section_styles is not None else (style.slug if style is not None else None)})
+            segments.append({"source_in_seconds": shot.start, "source_end_seconds": shot.end, "speed_effect": effect, "path": shot.path, "category": category, "timeline_start": position, "duration_frames": frames, "source_in_frame": round(shot.start * FPS), "source_fps": shot.fps, "speed": 1.0, "edit_style": section_styles[index].slug if section_styles is not None else (style.slug if style is not None else None)})
             remaining -= frames
             position += frames
     assert sum(s["duration_frames"] for s in segments) == target_frames
