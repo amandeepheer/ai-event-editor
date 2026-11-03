@@ -40,6 +40,11 @@ def main():
     p.add_argument("references", nargs="+")
     p.add_argument("--base", default="energetic-event")
     p.add_argument("--directory", default="my-styles")
+    p = sub.add_parser("render")
+    p.add_argument("plan", help="JSON edit plan")
+    p.add_argument("--output", default="highlight.mp4")
+    p.add_argument("--music")
+    p.add_argument("--audio-start", type=float, default=0)
     p = sub.add_parser("build")
     p.add_argument("shots")
     p.add_argument("--beats")
@@ -83,6 +88,9 @@ def main():
         Path(args.report).write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"Selected {len(selected)} non-overlapping shots: {args.output}")
         print(json.dumps(report, indent=2))
+    elif args.command == "render":
+        from .render import render_file
+        print(f"Rendered: {render_file(args.plan, args.output, args.music, args.audio_start)}")
     elif args.command == "styles":
         from .styles import PRESETS
         print("\\n".join(f"{slug}: {style.name}" for slug, style in PRESETS.items()))
