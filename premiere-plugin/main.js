@@ -4,6 +4,30 @@ try {
   entrypoints.setup({ panels: { "ai-event-editor": { show() {} } } });
 } catch (error) { /* Allows Node-only validation tests outside Premiere. */ }
 const status = document.getElementById("status");
+const preset = document.getElementById("duration-preset");
+const customSeconds = document.getElementById("custom-seconds");
+const customPanel = document.getElementById("custom-duration");
+const durationSummary = document.getElementById("duration-summary");
+function selectedDuration() {
+  if (preset.value === "auto") return null;
+  const seconds = Number(preset.value === "custom" ? customSeconds.value : preset.value);
+  if (!Number.isInteger(seconds) || seconds < 30 || seconds > 300) {
+    throw new Error("Duration must be a whole number between 30 and 300 seconds");
+  }
+  return seconds;
+}
+function updateDuration() {
+  customPanel.hidden = preset.value !== "custom";
+  try {
+    const seconds = selectedDuration();
+    durationSummary.textContent = seconds === null ? "Auto duration: recommendation not yet implemented" :
+      "Selected: " + Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+  } catch (error) { durationSummary.textContent = error.message; }
+}
+preset.addEventListener("change", updateDuration);
+customSeconds.addEventListener("input", updateDuration);
+updateDuration();
+
 function message(value) { status.textContent = value; }
 function validatePlan(value) {
   const plan = JSON.parse(value);
