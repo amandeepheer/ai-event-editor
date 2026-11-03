@@ -1,10 +1,13 @@
-"""Frame-based metadata-driven timeline planner; automatic AI labels come later."""
+"""Duration-adjustable, frame-based event recap planner."""
 from dataclasses import dataclass
 from typing import Any
+
 FPS = 25
-TARGET_FRAMES = 1500
+MIN_DURATION = 30
+MAX_DURATION = 300
 ORDER = ("drone", "stalls", "performance", "dancing", "crowd", "finale")
 WEIGHTS = (8, 12, 15, 13, 6, 6)
+
 @dataclass(frozen=True)
 class Shot:
     path: str
@@ -13,6 +16,7 @@ class Shot:
     end: float
     quality: float = 0.8
     fps: float = 25.0
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Shot":
         shot = cls(**data)
@@ -21,19 +25,25 @@ class Shot:
         return shot
 
 def plan(shots: list[Shot], beats: list[float], duration: int = 60) -> dict[str, Any]:
-    if duration != 60:
-        raise ValueError("MVP supports 60 seconds only")
+    if isinstance(duration, bool) or not isinstance(duration, int) or not MIN_DURATION <= duration <= MAX_DURATION:
+        raise ValueError("Duration must be an integer from 30 to 300 seconds")
     for category in ORDER:
         if not any(s.category == category for s in shots):
             raise ValueError(f"Missing required category: {category}")
+    target_frames = duration * FPS
     beat_frames = sorted({round(t * FPS) for t in beats if 0 < t < duration})
+    # Largest remainder allocation preserves exact frame count for any duration.
+    raw = [target_frames * w / sum(WEIGHTS) for w in WEIGHTS]
+    allocation = [int(x) for x in raw]
+    for index in sorted(range(len(raw)), key=lambda i: (-(raw[i] - allocation[i]), i))[:target_frames - sum(allocation)]:
+        allocation[index] += 1
     bounds = [0]
     cursor = 0
-    for weight in WEIGHTS[:-1]:
-        cursor += weight * FPS
-        nearby = [b for b in beat_frames if abs(b - cursor) <= 12 and b > bounds[-1] + 3 * FPS]
+    for frames in allocation[:-1]:
+        cursor += frames
+        nearby = [b for b in beat_frames if abs(b - cursor) <= 12 and b > bounds[-1] + FPS]
         bounds.append(min(nearby, key=lambda b: abs(b - cursor)) if nearby else cursor)
-    bounds.append(TARGET_FRAMES)
+    bounds.append(target_frames)
     segments = []
     used = set()
     for index, category in enumerate(ORDER):
@@ -53,5 +63,5 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60) -> dict[str,
             segments.append({"path": shot.path, "category": category, "timeline_start": position, "duration_frames": frames, "source_in_frame": round(shot.start * FPS), "source_fps": shot.fps, "speed": 1.0})
             remaining -= frames
             position += frames
-    assert sum(s["duration_frames"] for s in segments) == TARGET_FRAMES
-    return {"fps": FPS, "duration_frames": TARGET_FRAMES, "segments": segments, "warnings": ["Shot labels are manually supplied", "Premiere import and non-25fps sources are not validated"]}
+    assert sum(s["duration_frames"] for s in segments) == target_frames
+    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated"]}
