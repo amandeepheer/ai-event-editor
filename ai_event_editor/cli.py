@@ -20,11 +20,21 @@ def main():
     p.add_argument("folder")
     p.add_argument("--output", default="shot-candidates.json")
     p.add_argument("--max-clips", type=int, default=None)
+    p = sub.add_parser("styles")
+    p.add_argument("--directory", default="my-styles")
+    p = sub.add_parser("learn-style")
+    p.add_argument("slug")
+    p.add_argument("name")
+    p.add_argument("references", nargs="+")
+    p.add_argument("--base", default="energetic-event")
+    p.add_argument("--directory", default="my-styles")
     p = sub.add_parser("build")
     p.add_argument("shots")
     p.add_argument("--beats")
     p.add_argument("--music")
     p.add_argument("--duration", type=int, default=60, help="30 to 300 seconds")
+    p.add_argument("--style", default=None, help="Style slug")
+    p.add_argument("--styles-dir", default="my-styles")
     p.add_argument("--xml", default="recap.xml")
     p.add_argument("--plan", default="edit-plan.json")
     args = parser.parse_args()
@@ -41,10 +51,22 @@ def main():
         data = analyze_folder(args.folder, max_clips=args.max_clips)
         Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
         print(f"Generated {len(data)} candidates: {args.output}")
+    elif args.command == "styles":
+        from .styles import PRESETS
+        print("\\n".join(f"{slug}: {style.name}" for slug, style in PRESETS.items()))
+    elif args.command == "learn-style":
+        from .style_learning import learn_style
+        from .styles import save_style
+        style, report = learn_style(args.references, args.slug, args.name, base=args.base)
+        path = save_style(style, args.directory)
+        print(f"Saved {path}")
+        print(json.dumps(report, indent=2))
     else:
+        from .styles import load_style
         shots = [Shot.from_dict(x) for x in json.loads(Path(args.shots).read_text(encoding="utf-8"))]
         beat_times = json.loads(Path(args.beats).read_text(encoding="utf-8")) if args.beats else []
-        result = plan(shots, beat_times, duration=args.duration)
+        style = load_style(args.style, args.styles_dir) if args.style else None
+        result = plan(shots, beat_times, duration=args.duration, style=style)
         Path(args.plan).write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(f"Plan: {args.plan}")
         print(f"Premiere XML candidate: {export(result, args.xml, args.music)}")
