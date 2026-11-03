@@ -1,5 +1,5 @@
 """Duration-adjustable, frame-based event recap planner."""
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 from .beat_sync import beat_frames, choose_cut
 
@@ -57,7 +57,7 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
     if mix is not None:
         mix.validate()
         from .dynamic_mix import assign_styles
-        section_styles = [assign_styles(__import__("dataclasses").replace(mix, energy=(section_energy or {}).get(category, mix.energy)), (category,), beats, duration)[0] for category in ORDER]
+        section_styles = [assign_styles(replace(mix, energy=(section_energy or {}).get(category, mix.energy)), (category,), beats, duration)[0] for category in ORDER]
     else:
         section_styles = None
     segments = []
