@@ -27,7 +27,7 @@ def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmp
                 raise FileNotFoundError(path)
             part = Path(temp) / f"part-{index:05d}.mp4"
             duration = shot["duration_frames"] / fps
-            start = shot.get("source_in_seconds", shot["source_in_frame"] / fps)
+            start = shot["source_in_seconds"] if "source_in_seconds" in shot else shot["source_in_frame"] / fps
             command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
                        "-ss", str(start), "-i", str(path), "-t", str(duration),
                        "-vf", f"fps={fps},scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1",
