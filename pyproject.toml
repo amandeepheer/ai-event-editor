@@ -8,6 +8,7 @@ requires-python = ">=3.10"
 [project.optional-dependencies]
 media = ["librosa>=0.10,<1", "numpy>=1.26,<3"]
 test = ["pytest>=8,<10"]
+vision = ["torch>=2.2", "transformers>=4.40,<5", "pillow>=10"]
 [project.scripts]
 ai-event-editor = "ai_event_editor.cli:main"
 [tool.setuptools.packages.find]
