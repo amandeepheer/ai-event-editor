@@ -1,0 +1,4 @@
+[
+  {"path": "C:\\Event\\Footage\\drone01.mp4", "category": "drone", "start": 0, "end": 4, "quality": 0.91, "fps": 25},
+  {"path": "C:\\Event\\Footage\\stall01.mp4", "category": "stalls", "start": 2, "end": 5, "quality": 0.9, "fps": 25}
+]
