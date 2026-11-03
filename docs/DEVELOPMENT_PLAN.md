@@ -31,7 +31,7 @@ Build one local-first Python AI editing engine with **Adobe Premiere Pro plugin 
 ## Current verified vs unverified
 - Code exists for analysis, candidate selection, music beats, edit planning, experimental FCP7 XML, simple FFmpeg MP4 rendering, and timed titles.
 - Advanced speed effects are currently planning metadata; renderer explicitly refuses unsupported speed effects.
-- Premiere UXP panel scaffold validates plans and inspects the active project. Native sequence editing, engine communication and native effects have not been validated.
+- Premiere UXP panel validates plans, opens locally generated reviewed edits and includes an experimental new-sequence adapter using documented subclip/timeline actions. Contract tests use a mock Adobe host; native sequence editing has not been verified inside installed Premiere. Direct engine communication and native effects remain pending.
 - Title specifications include position presets, coordinates, opacity and animations; advanced visual controls and instruction interpreter are not implemented.
 - Baseline GitHub Actions run #76 passed at commit `1fcac3a`. Subsequent changes must pass the complete suite before being reported as verified.
 - XML export is experimental and is not proof of a working Premiere plugin.
@@ -43,3 +43,14 @@ Build one local-first Python AI editing engine with **Adobe Premiere Pro plugin 
 - Keep original media unchanged; explicit user approval before applying edits.
 - Maintain main-only GitHub workflow and inexpensive tests.
 - Test locally on Windows/Premiere when the home PC is available; cloud CI alone cannot verify native Premiere integration.
+
+
+## Guided workflow milestone (November 2026)
+- Desktop footage/music setup, excerpt validation, length/style/pacing controls and temporary thumbnails.
+- Keep/Reject/Must include decisions, source preview playback, category correction and saved reviews.
+- Flexible category coverage, capacity-aware timing, non-overlapping source use and protected moment selection.
+- Local RMS/onset music analysis for approximate anchors and louder-passage pacing.
+- Plan handoff by file into a Premiere panel; experimental native new-sequence assembly behind explicit confirmation.
+- Existing CLI, legacy desktop renderer and XML export retained.
+
+Next acceptance gate: installed Windows/Premiere walkthrough using real Sony/drone footage, including multiple uses of the same source, music offsets, mixed fps, framing, failure recovery and preservation of a manually edited sequence. Effects frequency and interview/speech mixing follow this gate; they are not complete.

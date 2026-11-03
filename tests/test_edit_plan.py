@@ -29,6 +29,13 @@ def cases():
     decimal['schema_version'] = 1.0
     decimal['segments'][0]['duration_frames'] = 25.0
     result.append(("json-integral-number", decimal, True))
+    audio = deepcopy(versioned)
+    audio['audio'] = {'path': 'music.wav', 'start_seconds': 3.5, 'duration_seconds': 2}
+    result.append(('music-excerpt', audio, True))
+    for key, value in [('start_seconds', -1), ('duration_seconds', 1), ('path', '')]:
+        broken = deepcopy(audio)
+        broken['audio'][key] = value
+        result.append(('invalid-audio-'+key, broken, False))
     speed = deepcopy(versioned)
     speed['segments'][0]['speed_effect'] = {'kind': 'slow_motion', 'speed': 0.5}
     result.append(("speed-metadata", speed, True))

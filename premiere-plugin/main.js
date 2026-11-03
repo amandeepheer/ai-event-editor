@@ -1,4 +1,4 @@
-/* Non-destructive Premiere UXP panel MVP. No timeline mutations yet. */
+/* Local edit-plan review and explicitly requested new-sequence creation. */
 try {
   const { entrypoints } = require("uxp");
   entrypoints.setup({ panels: { "ai-event-editor": { show() {} } } });
@@ -37,7 +37,7 @@ document.getElementById("validate").addEventListener("click", () => {
     message("Validated " + report.clips + " clips · " + report.duration_seconds + " seconds at " + report.fps +
             " fps.\n" + (report.standalone_supported ? "Normal-speed standalone render supported." :
             "Standalone render blocked: unsupported speed effects on " + report.unsupported_speed_clips.join(", ")) +
-            "\nPremiere timeline application is not implemented yet. No edits applied.");
+            "\nValidation does not apply edits. Native sequence creation is experimental.");
   } catch (error) { message("Validation failed: " + error.message); }
 });
 document.getElementById("inspect").addEventListener("click", async () => {
@@ -51,3 +51,37 @@ document.getElementById("inspect").addEventListener("click", async () => {
   } catch (error) { message("Premiere connection unavailable: " + error.message); }
 });
 if (typeof module !== "undefined") module.exports = { validatePlan };
+
+let applying = false;
+document.getElementById("open-plan").addEventListener("click", async () => {
+  if (applying) return;
+  try {
+    const fs = require("uxp").storage.localFileSystem;
+    const file = await fs.getFileForOpening({types:["json"], allowMultiple:false});
+    if (!file) return;
+    const text = await file.read();
+    const plan = validatePlan(text);
+    document.getElementById("plan").value = text;
+    document.getElementById("confirm-create").checked = false;
+    message("Opened reviewed edit: " + plan.segments.length + " clips, " + plan.duration_seconds + " seconds. Review before creating a sequence.");
+  } catch (error) { message("Could not open edit: " + error.message); }
+});
+document.getElementById("create-sequence").addEventListener("click", async () => {
+  if (applying) return;
+  if (!document.getElementById("confirm-create").checked) {
+    message("Tick the confirmation to create a new sequence and import local media."); return;
+  }
+  try {
+    const {applyNewSequence} = require("./premiere.js");
+    const plan = validatePlan(document.getElementById("plan").value);
+    applying = true;
+    document.getElementById("create-sequence").disabled = true;
+    const result = await applyNewSequence(require("premierepro"), plan, message);
+    message("Created " + result.name + " with " + result.clips + " editable video clips. Review framing, timing and audio in Premiere before delivery.");
+  } catch (error) { message("Sequence creation failed: " + error.message); }
+  finally {
+    applying = false;
+    document.getElementById("create-sequence").disabled = false;
+    document.getElementById("confirm-create").checked = false;
+  }
+});

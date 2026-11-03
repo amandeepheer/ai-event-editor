@@ -18,6 +18,11 @@ def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmp
         raise ValueError("Speed effects require the Stage 3 retiming renderer; refusing to discard them")
     from .edit_plan import validate_plan
     plan = validate_plan(plan)
+    if music is None and plan.get('audio'):
+        music, audio_start = plan['audio']['path'], plan['audio']['start_seconds']
+    from math import isfinite
+    if isinstance(audio_start, bool) or not isinstance(audio_start, (int, float)) or not isfinite(audio_start) or audio_start < 0:
+        raise ValueError('Audio start must be finite and nonnegative')
     fps = plan["fps"]
     segments = plan["segments"]
     if any(s["speed"] != 1 for s in segments):
@@ -25,6 +30,14 @@ def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmp
     if shutil.which(ffmpeg) is None:
         raise RuntimeError("FFmpeg is required")
     output = Path(output).expanduser().resolve()
+    sources = [Path(s['path']).expanduser().resolve() for s in segments]
+    if music:
+        sources.append(Path(music).expanduser().resolve())
+    if any(output == source or (output.exists() and source.exists() and output.samefile(source)) for source in sources):
+        raise ValueError("Output must not overwrite original footage or music")
+    for source in sources:
+        if not source.is_file():
+            raise FileNotFoundError(source)
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="event-editor-") as temp:
         pieces = []
@@ -65,4 +78,11 @@ def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmp
 
 def render_file(plan_path, output, music=None, audio_start=0, titles_path=None):
     titles = json.loads(Path(titles_path).read_text(encoding="utf-8")) if titles_path else None
-    return render(json.loads(Path(plan_path).read_text(encoding="utf-8")), output, music, audio_start, titles=titles)
+    plan = json.loads(Path(plan_path).read_text(encoding="utf-8"))
+    if Path(output).expanduser().resolve() == Path(plan_path).expanduser().resolve():
+        raise ValueError("Output must not overwrite the edit plan")
+    if music is None and isinstance(plan, dict) and plan.get('audio'):
+        from .edit_plan import validate_plan
+        plan = validate_plan(plan)
+        music, audio_start = plan['audio']['path'], plan['audio']['start_seconds']
+    return render(plan, output, music, audio_start, titles=titles)

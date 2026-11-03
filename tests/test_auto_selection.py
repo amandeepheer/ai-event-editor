@@ -28,7 +28,7 @@ def test_filters_invalid_and_too_short():
 def test_report_missing_categories():
     report = selection_report(select_shots([candidate("a", "crowd", 0, 2)]))
     assert report["selected"] == 1
-    assert report["ready_for_current_planner"] is False
+    assert report["ready_for_current_planner"] is True
     assert "drone" in report["missing_categories"]
 
 def test_per_category_limit():

@@ -60,5 +60,5 @@ def selection_report(shots: list[dict]) -> dict:
     counts = {category: sum(s["category"] == category for s in shots) for category in CATEGORIES}
     missing = [category for category, count in counts.items() if count == 0]
     return {"selected": len(shots), "counts": counts, "missing_categories": missing,
-            "ready_for_current_planner": not missing,
+            "ready_for_current_planner": bool(shots),
             "warning": "AI categories and heuristic quality scores require human review"}

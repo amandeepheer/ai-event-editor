@@ -51,6 +51,12 @@ function validatePlan(value) {
   });
   if (cursor !== total) throw new Error("duration_frames does not match segment total");
   if ("duration_seconds" in plan && Math.abs(number(plan.duration_seconds, "duration_seconds", true) * fps - total) > 0.000001) throw new Error("Conflicting duration_seconds");
+  if ("audio" in plan) {
+    const audio = plan.audio;
+    if (!object(audio) || typeof audio.path !== "string" || !audio.path.trim()) throw new Error("Audio path required");
+    number(audio.start_seconds, "audio.start_seconds");
+    if (Math.abs(number(audio.duration_seconds,"audio.duration_seconds",true)*fps-total) > .000001) throw new Error("Audio duration must match timeline");
+  }
   plan.schema_version = 1;
   plan.duration_seconds = total / fps;
   return plan;

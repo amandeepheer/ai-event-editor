@@ -27,4 +27,4 @@ def coverage_report(candidates: list[dict]) -> dict:
     ranked = rank_candidates(candidates)
     missing = [label for label in LABELS if not ranked.get(label)]
     return {"missing_categories": missing, "counts": {label: len(ranked.get(label, [])) for label in LABELS},
-            "ready_for_planning": not missing}
+            "ready_for_planning": bool(ranked)}

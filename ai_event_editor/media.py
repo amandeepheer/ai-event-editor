@@ -11,8 +11,15 @@ def scan(folder: str) -> list[dict]:
     for path in sorted(root.rglob("*")):
         if path.suffix.lower() not in SUPPORTED:
             continue
-        command = ["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height,avg_frame_rate", "-of", "json", str(path)]
-        proc = subprocess.run(command, capture_output=True, text=True, check=True)
-        info = json.loads(proc.stdout)
-        results.append({"path": str(path), "duration": float(info.get("format", {}).get("duration", 0)), "streams": info.get("streams", [])})
+        results.append(probe(path))
     return results
+
+
+def probe(path):
+    path = Path(path).expanduser().resolve()
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    command = ["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height,avg_frame_rate", "-of", "json", str(path)]
+    proc = subprocess.run(command, capture_output=True, text=True, check=True)
+    info = json.loads(proc.stdout)
+    return {"path": str(path), "duration": float(info.get("format", {}).get("duration", 0)), "streams": info.get("streams", [])}

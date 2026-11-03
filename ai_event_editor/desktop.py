@@ -87,4 +87,9 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if "--legacy" in sys.argv:
+        main()
+    else:
+        from .guided import main as guided_main
+        guided_main()

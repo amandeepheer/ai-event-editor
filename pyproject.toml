@@ -11,6 +11,7 @@ test = ["pytest>=8,<10"]
 vision = ["torch>=2.2", "transformers>=4.40,<5", "pillow>=10"]
 [project.scripts]
 ai-event-editor = "ai_event_editor.cli:main"
+ai-event-editor-desktop = "ai_event_editor.guided:main"
 [tool.setuptools.packages.find]
 include = ["ai_event_editor*"]
 [tool.pytest.ini_options]

@@ -1,9 +1,13 @@
-# AI Event Editor — Premiere Pro UXP plugin (early scaffold)
+# AI Event Editor — Premiere panel
 
-This is a **non-destructive UXP panel scaffold**, not yet a working automated timeline editor. It can validate a pasted AI edit plan and inspect the active Premiere project/sequence. The instruction box is a UI placeholder; natural-language interpretation is not implemented.
+Experimental Adobe UXP integration. Load this directory with Adobe UXP Developer Tool.
 
-Requires a compatible Premiere Pro release with UXP support and Adobe's UXP Developer Tool. See [Adobe UXP documentation](https://developer.adobe.com/premiere-pro/uxp/) for loading a development plugin.
+Prepare footage, music, length/style/pacing and shot decisions in the local desktop workflow (`python -m ai_event_editor.desktop`). Click **Save edit for Premiere**, then **Open reviewed edit** in the panel. No manual JSON authoring or copy/paste is needed; existing JSON validation remains available.
 
-Next: file selection and secure local engine communication, media-to-project item mapping, supported sequence insertion API, trims, transitions and titles. Do not assume the plugin can apply all effects until verified in Premiere.
+After reviewing the plan, tick the confirmation and choose **Create new sequence**. This uses native subclips and timeline actions, not a flattened MP4 or XML import. Video subclips exclude source audio; the optional music subclip uses the selected excerpt. Existing sequences and source marks remain unchanged. New media items and partial sequences can remain after a failure; nothing is automatically deleted or saved.
 
-No remote service, paid AI API or cloud account is required by this scaffold.
+Native assembly requires Premiere 26.3+ (subclip API). The manifest retains the older minimum for inspect/validate functionality. Native behavior has **not** been verified in installed Premiere. Tests use documented API signatures and a mock host; they do not prove runtime compatibility. Default Premiere preset geometry is used; inspect framing, music, trim points and timeline duration before delivery.
+
+Speed effects and native titles are explicitly rejected rather than silently discarded. Effects intensity, interviews and direct engine communication are later work. The duration and instruction scaffold does not modify imported plans; set supported controls in the desktop workflow.
+
+See [workflow details](../docs/GUIDED_WORKFLOW.md).

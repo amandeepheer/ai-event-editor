@@ -83,6 +83,14 @@ def validate_plan(value):
         seconds = _number(plan["duration_seconds"], "duration_seconds", positive=True)
         if abs(seconds * fps - total) > 0.000001:
             raise ValueError("duration_seconds conflicts with duration_frames")
+    if 'audio' in plan:
+        audio = plan['audio']
+        if not isinstance(audio, dict) or not isinstance(audio.get('path'), str) or not audio['path'].strip():
+            raise ValueError('Audio must contain a local music path')
+        _number(audio.get('start_seconds'), 'audio.start_seconds')
+        length = _number(audio.get('duration_seconds'), 'audio.duration_seconds', positive=True)
+        if abs(length*fps-total) > .000001:
+            raise ValueError('Audio duration must match the timeline')
     plan.update(schema_version=SCHEMA_VERSION, duration_seconds=total / fps)
     return plan
 

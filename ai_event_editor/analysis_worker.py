@@ -11,7 +11,7 @@ from .frame_sampling import extract_frame
 from .vision import PROMPTS
 
 class VisionWorker:
-    def __init__(self, model_name: str = "openai/clip-vit-base-patch32"):
+    def __init__(self, model_name: str = "openai/clip-vit-base-patch32", local_files_only: bool = False):
         try:
             import torch
             from transformers import CLIPModel, CLIPProcessor
@@ -19,8 +19,8 @@ class VisionWorker:
             raise RuntimeError('Install vision dependencies: pip install ".[vision]"') from exc
         self.torch = torch
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = CLIPModel.from_pretrained(model_name).to(self.device).eval()
-        self.processor = CLIPProcessor.from_pretrained(model_name)
+        self.model = CLIPModel.from_pretrained(model_name, local_files_only=local_files_only).to(self.device).eval()
+        self.processor = CLIPProcessor.from_pretrained(model_name, local_files_only=local_files_only)
         self.labels = list(PROMPTS)
         self.model_name = model_name
 
@@ -71,6 +71,9 @@ def analyze_folder(folder: str, max_clips: int | None = None, worker=None) -> li
     media = scan(folder)
     if max_clips is not None:
         media = media[:max_clips]
+    return analyze_media(media, worker)
+
+def analyze_media(media, worker=None):
     if not media:
         return []
     worker = worker if worker is not None else VisionWorker()
@@ -97,5 +100,18 @@ def analyze_folder(folder: str, max_clips: int | None = None, worker=None) -> li
                 candidates.append({"path": clip["path"], "start": start, "end": end,
                                    "category": result["category"], "confidence": result["confidence"],
                                    "quality": frame_quality(paths[index][1]), "model": getattr(worker, "model_name", "test-worker"),
-                                   "review_required": True})
+                                   "review_required": True, "fps": source_fps(clip)})
     return candidates
+
+
+def source_fps(clip):
+    from fractions import Fraction
+    for stream in clip.get("streams", []):
+        if stream.get("codec_type") == "video":
+            try:
+                value = float(Fraction(stream.get("avg_frame_rate", "25")))
+                if value > 0:
+                    return value
+            except (ValueError, ZeroDivisionError):
+                pass
+    return 25.0

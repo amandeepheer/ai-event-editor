@@ -23,5 +23,5 @@ def test_ranking_quality_and_confidence():
 
 def test_coverage_flags_missing():
     result = coverage_report([{"path": "x.mp4", "category": "drone", "start": 0, "end": 5}])
-    assert not result["ready_for_planning"]
+    assert result["ready_for_planning"]
     assert "performance" in result["missing_categories"]

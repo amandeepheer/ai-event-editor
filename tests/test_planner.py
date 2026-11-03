@@ -12,8 +12,10 @@ def test_exact_60_and_order():
     assert {s["category"] for s in result["segments"]} == set(ORDER)
     assert all(a["timeline_start"] + a["duration_frames"] == b["timeline_start"] for a, b in zip(result["segments"], result["segments"][1:]))
 def test_missing_category():
-    with pytest.raises(ValueError, match="Missing required category"):
-        plan(fixture_shots()[:-6], [])
+    result = plan(fixture_shots()[:-6], [])
+    assert result["duration_frames"] == 1500
+    assert "finale" in result["missing_categories"]
+    assert all(s["category"] != "finale" for s in result["segments"])
 def test_insufficient_footage():
     with pytest.raises(ValueError, match="Insufficient unique footage"):
         plan([Shot(f"/example/{cat}.mp4", cat, 0, 2) for cat in ORDER], [])
