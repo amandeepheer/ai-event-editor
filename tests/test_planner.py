@@ -1,12 +1,12 @@
 import xml.etree.ElementTree as ET
 import pytest
-from ai_event_editor.planner import Shot, plan, TARGET_FRAMES, ORDER
+from ai_event_editor.planner import Shot, plan, FPS, ORDER
 from ai_event_editor.xml_export import export
 def fixture_shots():
     return [Shot(f"/example/{category}{n}.mp4", category, 0, 5, .9 - n * .01) for category in ORDER for n in range(6)]
 def test_exact_60_and_order():
     result = plan(fixture_shots(), list(range(1, 60)))
-    assert sum(s["duration_frames"] for s in result["segments"]) == TARGET_FRAMES
+    assert sum(s["duration_frames"] for s in result["segments"]) == 60 * FPS
     assert result["segments"][0]["category"] == "drone"
     assert result["segments"][-1]["category"] == "finale"
     assert {s["category"] for s in result["segments"]} == set(ORDER)
