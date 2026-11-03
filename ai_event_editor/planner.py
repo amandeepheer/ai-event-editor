@@ -2,6 +2,7 @@
 from dataclasses import dataclass, replace
 from typing import Any
 from .beat_sync import beat_frames, choose_cut
+from .speed_effects import speed_effect
 
 FPS = 25
 MIN_DURATION = 30
@@ -25,7 +26,7 @@ class Shot:
             raise ValueError("Invalid shot data")
         return shot
 
-def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, mix=None, section_energy: dict[str, int] | None = None) -> dict[str, Any]:
+def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, mix=None, section_energy: dict[str, int] | None = None, auto_speed: bool = False) -> dict[str, Any]:
     if isinstance(duration, bool) or not isinstance(duration, int) or not MIN_DURATION <= duration <= MAX_DURATION:
         raise ValueError("Duration must be an integer from 30 to 300 seconds")
     for category in ORDER:
@@ -79,8 +80,9 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
             frames = choose_cut(position, remaining, capacity, target, beats_in_frames, FPS, energy) if beats_in_frames else min(remaining, capacity, target)
             if frames < 1:
                 raise ValueError("Source shot too short")
-            segments.append({"path": shot.path, "category": category, "timeline_start": position, "duration_frames": frames, "source_in_frame": round(shot.start * FPS), "source_fps": shot.fps, "speed": 1.0, "edit_style": section_styles[index].slug if section_styles is not None else (style.slug if style is not None else None)})
+            effect = speed_effect(category, shot.fps, energy, FPS) if auto_speed else {"kind": "normal", "speed": 1.0, "requires_render": False}
+            segments.append({"speed_effect": effect, "path": shot.path, "category": category, "timeline_start": position, "duration_frames": frames, "source_in_frame": round(shot.start * FPS), "source_fps": shot.fps, "speed": 1.0, "edit_style": section_styles[index].slug if section_styles is not None else (style.slug if style is not None else None)})
             remaining -= frames
             position += frames
     assert sum(s["duration_frames"] for s in segments) == target_frames
-    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "style": style.slug if style is not None else None, "dynamic_mix": mix.to_dict() if mix is not None else None, "section_energy": section_energy or {}, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated"]}
+    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "style": style.slug if style is not None else None, "dynamic_mix": mix.to_dict() if mix is not None else None, "section_energy": section_energy or {}, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated", "Speed effects are planning metadata only; XML export does not apply time remapping"]}
