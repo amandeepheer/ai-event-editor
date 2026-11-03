@@ -6,6 +6,7 @@ from .media import scan
 from .music import detect_beats
 from .planner import Shot, plan
 from .xml_export import export
+
 def main():
     parser = argparse.ArgumentParser(description="Local event editor prototype")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -15,10 +16,15 @@ def main():
     p = sub.add_parser("beats")
     p.add_argument("music")
     p.add_argument("--output", default="beats.json")
+    p = sub.add_parser("analyze")
+    p.add_argument("folder")
+    p.add_argument("--output", default="shot-candidates.json")
+    p.add_argument("--max-clips", type=int, default=None)
     p = sub.add_parser("build")
     p.add_argument("shots")
     p.add_argument("--beats")
     p.add_argument("--music")
+    p.add_argument("--duration", type=int, default=60, help="30 to 300 seconds")
     p.add_argument("--xml", default="recap.xml")
     p.add_argument("--plan", default="edit-plan.json")
     args = parser.parse_args()
@@ -30,10 +36,15 @@ def main():
         data = detect_beats(args.music)
         Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
         print(f"Detected {len(data)} beats: {args.output}")
+    elif args.command == "analyze":
+        from .analysis_worker import analyze_folder
+        data = analyze_folder(args.folder, max_clips=args.max_clips)
+        Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
+        print(f"Generated {len(data)} candidates: {args.output}")
     else:
         shots = [Shot.from_dict(x) for x in json.loads(Path(args.shots).read_text(encoding="utf-8"))]
         beat_times = json.loads(Path(args.beats).read_text(encoding="utf-8")) if args.beats else []
-        result = plan(shots, beat_times)
+        result = plan(shots, beat_times, duration=args.duration)
         Path(args.plan).write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(f"Plan: {args.plan}")
         print(f"Premiere XML candidate: {export(result, args.xml, args.music)}")
