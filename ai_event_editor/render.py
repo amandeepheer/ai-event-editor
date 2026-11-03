@@ -9,14 +9,14 @@ import tempfile
 from pathlib import Path
 
 def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmpeg="ffmpeg", titles=None):
-    if shutil.which(ffmpeg) is None:
-        raise RuntimeError("FFmpeg is required")
     if not plan.get("segments") or plan.get("fps", 0) <= 0:
         raise ValueError("Invalid timeline")
     fps = plan["fps"]
     segments = plan["segments"]
     if any(s.get("speed_effect", {}).get("kind", "normal") != "normal" for s in segments):
         raise ValueError("Speed effects require the Stage 3 retiming renderer; refusing to discard them")
+    if shutil.which(ffmpeg) is None:
+        raise RuntimeError("FFmpeg is required")
     output = Path(output).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="event-editor-") as temp:
