@@ -24,7 +24,7 @@ class Shot:
             raise ValueError("Invalid shot data")
         return shot
 
-def plan(shots: list[Shot], beats: list[float], duration: int = 60) -> dict[str, Any]:
+def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None) -> dict[str, Any]:
     if isinstance(duration, bool) or not isinstance(duration, int) or not MIN_DURATION <= duration <= MAX_DURATION:
         raise ValueError("Duration must be an integer from 30 to 300 seconds")
     for category in ORDER:
@@ -33,7 +33,7 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60) -> dict[str,
     target_frames = duration * FPS
     beat_frames = sorted({round(t * FPS) for t in beats if 0 < t < duration})
     # Largest remainder allocation preserves exact frame count for any duration.
-    raw = [target_frames * w / sum(WEIGHTS) for w in WEIGHTS]
+    if style is not None:\n        style.validate()\n    weights = style.category_weights if style is not None else WEIGHTS\n    raw = [target_frames * w / sum(weights) for w in weights]
     allocation = [int(x) for x in raw]
     for index in sorted(range(len(raw)), key=lambda i: (-(raw[i] - allocation[i]), i))[:target_frames - sum(allocation)]:
         allocation[index] += 1
@@ -44,7 +44,7 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60) -> dict[str,
         nearby = [b for b in beat_frames if abs(b - cursor) <= 12 and b > bounds[-1] + FPS]
         bounds.append(min(nearby, key=lambda b: abs(b - cursor)) if nearby else cursor)
     bounds.append(target_frames)
-    segments = []
+    max_shot_frames = max(FPS // 2, round(style.cut_seconds * FPS)) if style is not None else 3 * FPS\n    segments = []
     used = set()
     for index, category in enumerate(ORDER):
         remaining = bounds[index + 1] - bounds[index]
@@ -57,11 +57,11 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60) -> dict[str,
             shot = available[0]
             used.add((shot.path, shot.start, shot.end))
             capacity = int((shot.end - shot.start) * FPS + 1e-7)
-            frames = min(remaining, capacity, (4 if category in ("drone", "finale") else 3) * FPS)
+            frames = min(remaining, capacity, max_shot_frames if style is not None else (4 if category in ("drone", "finale") else 3) * FPS)
             if frames < 1:
                 raise ValueError("Source shot too short")
             segments.append({"path": shot.path, "category": category, "timeline_start": position, "duration_frames": frames, "source_in_frame": round(shot.start * FPS), "source_fps": shot.fps, "speed": 1.0})
             remaining -= frames
             position += frames
     assert sum(s["duration_frames"] for s in segments) == target_frames
-    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated"]}
+    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "style": style.slug if style is not None else None, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated"]}
