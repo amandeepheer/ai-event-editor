@@ -16,3 +16,11 @@ Development status: early prototype. The Premiere plugin has **not** been implem
 Create and verify a Premiere Pro plugin panel that applies the shared AI edit plan to an editable Premiere timeline. Confirm Adobe API compatibility first; advanced effects may require fallbacks.
 
 See [development plan](docs/DEVELOPMENT_PLAN.md) for scope, stages, limitations and acceptance criteria.
+
+## Standalone desktop preview
+
+On a Windows machine with Python and FFmpeg installed, launch `python -m ai_event_editor.desktop`. This minimal Tkinter UI opens an existing edit-plan JSON and renders a normal-speed MP4. It is not yet a full visual editor or packaged installer.
+
+## Premiere plugin preview
+
+The `premiere-plugin/` directory contains an early Adobe UXP panel scaffold. Load it with Adobe UXP Developer Tool into a compatible Premiere version; it currently validates JSON plans and inspects the active project without changing the timeline. Native sequence editing is the next milestone.
