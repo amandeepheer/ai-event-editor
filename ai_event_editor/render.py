@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmpeg="ffmpeg"):
+def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmpeg="ffmpeg", titles=None):
     if shutil.which(ffmpeg) is None:
         raise RuntimeError("FFmpeg is required")
     if not plan.get("segments") or plan.get("fps", 0) <= 0:
@@ -43,6 +43,10 @@ def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmp
             if not Path(music).is_file():
                 raise FileNotFoundError(music)
             command += ["-ss", str(audio_start), "-i", str(music)]
+        from .titles import filter_chain
+        title_filters = filter_chain(titles or [], temp, plan["duration_frames"] / fps)
+        if title_filters:
+            command += ["-vf", title_filters]
         command += ["-t", str(plan["duration_frames"] / fps),
                     "-map", "0:v:0"]
         if music:
@@ -52,5 +56,6 @@ def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmp
         subprocess.run(command, check=True)
     return str(output)
 
-def render_file(plan_path, output, music=None, audio_start=0):
-    return render(json.loads(Path(plan_path).read_text(encoding="utf-8")), output, music, audio_start)
+def render_file(plan_path, output, music=None, audio_start=0, titles_path=None):
+    titles = json.loads(Path(titles_path).read_text(encoding="utf-8")) if titles_path else None
+    return render(json.loads(Path(plan_path).read_text(encoding="utf-8")), output, music, audio_start, titles=titles)
