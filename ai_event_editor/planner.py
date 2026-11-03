@@ -87,4 +87,5 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
             remaining -= frames
             position += frames
     assert sum(s["duration_frames"] for s in segments) == target_frames
-    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "style": style.slug if style is not None else None, "dynamic_mix": mix.to_dict() if mix is not None else None, "section_energy": section_energy or {}, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated", "Speed effects are planning metadata only; XML export does not apply time remapping"]}
+    from .edit_plan import validate_plan
+    return validate_plan({"schema_version": 1, "fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "style": style.slug if style is not None else None, "dynamic_mix": mix.to_dict() if mix is not None else None, "section_energy": section_energy or {}, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated", "Speed effects are planning metadata only; XML export does not apply time remapping"]})

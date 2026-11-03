@@ -29,25 +29,15 @@ customSeconds.addEventListener("input", updateDuration);
 updateDuration();
 
 function message(value) { status.textContent = value; }
-function validatePlan(value) {
-  const plan = JSON.parse(value);
-  if (!plan || !Array.isArray(plan.segments) || !plan.segments.length || !(plan.fps > 0)) {
-    throw new Error("Plan must include positive fps and nonempty segments");
-  }
-  for (const segment of plan.segments) {
-    if (typeof segment.path !== "string" || !segment.path ||
-        !Number.isInteger(segment.duration_frames) || segment.duration_frames <= 0 ||
-        !Number.isInteger(segment.timeline_start) || segment.timeline_start < 0) {
-      throw new Error("Invalid segment in edit plan");
-    }
-  }
-  return plan;
-}
+const { validatePlan, preflightPlan } = require("./edit-plan.js");
 document.getElementById("validate").addEventListener("click", () => {
   try {
     const plan = validatePlan(document.getElementById("plan").value);
-    message("Validated " + plan.segments.length + " clips at " + plan.fps +
-            " fps. This is a preview only; no Premiere edits applied.");
+    const report = preflightPlan(plan);
+    message("Validated " + report.clips + " clips · " + report.duration_seconds + " seconds at " + report.fps +
+            " fps.\n" + (report.standalone_supported ? "Normal-speed standalone render supported." :
+            "Standalone render blocked: unsupported speed effects on " + report.unsupported_speed_clips.join(", ")) +
+            "\nPremiere timeline application is not implemented yet. No edits applied.");
   } catch (error) { message("Validation failed: " + error.message); }
 });
 document.getElementById("inspect").addEventListener("click", async () => {

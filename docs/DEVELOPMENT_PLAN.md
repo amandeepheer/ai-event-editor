@@ -22,7 +22,7 @@ Build one local-first Python AI editing engine with **Adobe Premiere Pro plugin 
 ## Revised stages
 1. **Footage analysis** — implemented prototype; real-camera quality evaluation pending.
 2. **Beat-aware edit planning** — implemented prototype; accurate source/timeline time mapping and validation pending.
-3. **Shared engine hardening** — next: versioned timeline schema, robust time remapping, reliable duration handling, tests, documented supported features.
+3. **Shared engine hardening** — in progress: version 1 timeline contract, stable IDs, duration/source-range validation and Python/panel parity tests implemented. Actual time remapping remains pending.
 4. **Premiere plugin MVP** — priority: research current supported Premiere extension APIs, panel with media/music/length/style/instruction inputs, engine communication, import and editable sequence creation. Test in installed Premiere.
 5. **Premiere-native effects and text** — support compatible transitions, time remapping, native editable titles where possible; manually adjustable X/Y, size, colour, opacity, timing, animation and locks. For effects not exposed through APIs, provide clear alternatives (rendered overlays or manual Premiere edits).
 6. **Optional standalone export** — maintain and improve FFmpeg MP4 output, audio, speed effects, overlays; standalone GUI is not launch-critical.
@@ -31,9 +31,9 @@ Build one local-first Python AI editing engine with **Adobe Premiere Pro plugin 
 ## Current verified vs unverified
 - Code exists for analysis, candidate selection, music beats, edit planning, experimental FCP7 XML, simple FFmpeg MP4 rendering, and timed titles.
 - Advanced speed effects are currently planning metadata; renderer explicitly refuses unsupported speed effects.
-- Premiere plugin **does not exist yet**; no Premiere API bridge or native effects have been validated.
+- Premiere UXP panel scaffold validates plans and inspects the active project. Native sequence editing, engine communication and native effects have not been validated.
 - Title specifications include position presets, coordinates, opacity and animations; advanced visual controls and instruction interpreter are not implemented.
-- Earlier GitHub Actions run passed 60 unit tests, but it predates subsequent Stage 2/3 changes. Re-run complete tests before claiming the current version passes.
+- Baseline GitHub Actions run #76 passed at commit `1fcac3a`. Subsequent changes must pass the complete suite before being reported as verified.
 - XML export is experimental and is not proof of a working Premiere plugin.
 
 ## Priorities and acceptance criteria

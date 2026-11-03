@@ -4,6 +4,8 @@ This is a manual edit-plan renderer, not yet an AI-powered visual timeline.
 """
 from pathlib import Path
 import threading
+import json
+import queue
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -39,19 +41,38 @@ def main():
     button.grid(row=3, column=1, pady=20)
     ttk.Label(root, textvariable=status, wraplength=560).grid(row=4, column=0, columnspan=3, padx=12)
 
-    def finish(error=None):
+    def inspect():
+        try:
+            from .edit_plan import preflight_plan
+            report = preflight_plan(json.loads(Path(plan.get()).read_text(encoding="utf-8")))
+            support = "Ready for normal-speed rendering." if report["standalone_supported"] else "Rendering blocked: speed effects are not supported yet."
+            status.set(f"{report['clips']} clips · {report['duration_seconds']:g}s · {report['fps']:g} fps. {support}")
+        except (ValueError, OSError) as error:
+            status.set("Plan check failed: " + str(error))
+
+    ttk.Button(root, text="Check edit plan", command=inspect).grid(row=3, column=0, padx=12)
+    completed = queue.Queue()
+
+    def finish(destination, error=None):
         button.configure(state="normal")
-        status.set("Render failed: " + str(error) if error else "MP4 created: " + output.get())
+        status.set("Render failed: " + str(error) if error else "MP4 created: " + destination)
         if error:
             messagebox.showerror("Render failed", str(error))
 
-    def worker():
+    def worker(plan_path, destination, music_path):
         try:
             from .render import render_file
-            render_file(plan.get(), output.get(), music.get() or None)
-            root.after(0, finish)
+            render_file(plan_path, destination, music_path or None)
+            completed.put((destination, None))
         except Exception as error:
-            root.after(0, lambda e=error: finish(e))
+            completed.put((destination, error))
+
+    def poll():
+        try:
+            finish(*completed.get_nowait())
+        except queue.Empty:
+            pass
+        root.after(100, poll)
 
     def start():
         if not plan.get() or not output.get():
@@ -59,9 +80,10 @@ def main():
             return
         button.configure(state="disabled")
         status.set("Rendering locally with FFmpeg. Please wait...")
-        threading.Thread(target=worker, daemon=True).start()
+        threading.Thread(target=worker, args=(plan.get(), output.get(), music.get()), daemon=True).start()
 
     button.configure(command=start)
+    root.after(100, poll)
     root.mainloop()
 
 if __name__ == "__main__":

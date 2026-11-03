@@ -10,6 +10,8 @@ from .xml_export import export
 def main():
     parser = argparse.ArgumentParser(description="Local event editor prototype")
     sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("validate-plan", help="Check edit-plan timing and render support locally")
+    p.add_argument("plan")
     p = sub.add_parser("scan")
     p.add_argument("folder")
     p.add_argument("--output", default="media-inventory.json")
@@ -63,7 +65,13 @@ def main():
     p.add_argument("--xml", default="recap.xml")
     p.add_argument("--plan", default="edit-plan.json")
     args = parser.parse_args()
-    if args.command == "scan":
+    if args.command == "validate-plan":
+        from .edit_plan import preflight_plan
+        try:
+            print(json.dumps(preflight_plan(json.loads(Path(args.plan).read_text(encoding="utf-8"))), indent=2))
+        except (ValueError, OSError) as error:
+            parser.error(str(error))
+    elif args.command == "scan":
         data = scan(args.folder)
         Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
         print(f"Found {len(data)} clips: {args.output}")

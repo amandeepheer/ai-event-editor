@@ -9,11 +9,18 @@ import tempfile
 from pathlib import Path
 
 def render(plan, output, music=None, audio_start=0, width=1280, height=720, ffmpeg="ffmpeg", titles=None):
-    if not plan.get("segments") or plan.get("fps", 0) <= 0:
-        raise ValueError("Invalid timeline")
+    # Keep the actionable legacy speed-effect diagnostic even for old partial plans.
+    if isinstance(plan, dict) and isinstance(plan.get("segments"), list) and any(
+        isinstance(s, dict) and isinstance(s.get("speed_effect"), dict)
+        and s["speed_effect"].get("kind", "normal") in ("slow_motion", "ramp")
+        for s in plan["segments"]
+    ):
+        raise ValueError("Speed effects require the Stage 3 retiming renderer; refusing to discard them")
+    from .edit_plan import validate_plan
+    plan = validate_plan(plan)
     fps = plan["fps"]
     segments = plan["segments"]
-    if any(s.get("speed_effect", {}).get("kind", "normal") != "normal" for s in segments):
+    if any(s["speed"] != 1 for s in segments):
         raise ValueError("Speed effects require the Stage 3 retiming renderer; refusing to discard them")
     if shutil.which(ffmpeg) is None:
         raise RuntimeError("FFmpeg is required")
