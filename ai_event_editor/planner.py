@@ -1,6 +1,7 @@
 """Duration-adjustable, frame-based event recap planner."""
 from dataclasses import dataclass
 from typing import Any
+from .beat_sync import beat_frames, choose_cut
 
 FPS = 25
 MIN_DURATION = 30
@@ -24,14 +25,19 @@ class Shot:
             raise ValueError("Invalid shot data")
         return shot
 
-def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, mix=None) -> dict[str, Any]:
+def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, mix=None, section_energy: dict[str, int] | None = None) -> dict[str, Any]:
     if isinstance(duration, bool) or not isinstance(duration, int) or not MIN_DURATION <= duration <= MAX_DURATION:
         raise ValueError("Duration must be an integer from 30 to 300 seconds")
     for category in ORDER:
         if not any(s.category == category for s in shots):
             raise ValueError(f"Missing required category: {category}")
+    if section_energy is not None:
+        if mix is None:
+            raise ValueError("Section energy requires dynamic mix")
+        if not isinstance(section_energy, dict) or any(k not in ORDER or isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= 100 for k, v in section_energy.items()):
+            raise ValueError("Section energy must map valid categories to integers 0-100")
     target_frames = duration * FPS
-    beat_frames = sorted({round(t * FPS) for t in beats if 0 < t < duration})
+    beats_in_frames = beat_frames(beats, FPS, target_frames)
     # Largest remainder allocation preserves exact frame count for any duration.
     if style is not None:
         style.validate()
@@ -44,14 +50,14 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
     cursor = 0
     for frames in allocation[:-1]:
         cursor += frames
-        nearby = [b for b in beat_frames if abs(b - cursor) <= 12 and b > bounds[-1] + FPS]
+        nearby = [b for b in beats_in_frames if abs(b - cursor) <= 12 and b > bounds[-1] + FPS]
         bounds.append(min(nearby, key=lambda b: abs(b - cursor)) if nearby else cursor)
     bounds.append(target_frames)
     max_shot_frames = max(FPS // 2, round(style.cut_seconds * FPS)) if style is not None else 3 * FPS
     if mix is not None:
         mix.validate()
         from .dynamic_mix import assign_styles
-        section_styles = assign_styles(mix, ORDER, beats, duration)
+        section_styles = [assign_styles(__import__("dataclasses").replace(mix, energy=(section_energy or {}).get(category, mix.energy)), (category,), beats, duration)[0] for category in ORDER]
     else:
         section_styles = None
     segments = []
@@ -68,11 +74,13 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
             used.add((shot.path, shot.start, shot.end))
             capacity = int((shot.end - shot.start) * FPS + 1e-7)
             local_max = max(FPS // 2, round(section_styles[index].cut_seconds * FPS)) if section_styles is not None else max_shot_frames
-            frames = min(remaining, capacity, local_max if section_styles is not None or style is not None else (4 if category in ("drone", "finale") else 3) * FPS)
+            target = local_max if section_styles is not None or style is not None else (4 if category in ("drone", "finale") else 3) * FPS
+            energy = (section_energy or {}).get(category, mix.energy if mix is not None else 50)
+            frames = choose_cut(position, remaining, capacity, target, beats_in_frames, FPS, energy) if beats_in_frames else min(remaining, capacity, target)
             if frames < 1:
                 raise ValueError("Source shot too short")
             segments.append({"path": shot.path, "category": category, "timeline_start": position, "duration_frames": frames, "source_in_frame": round(shot.start * FPS), "source_fps": shot.fps, "speed": 1.0, "edit_style": section_styles[index].slug if section_styles is not None else (style.slug if style is not None else None)})
             remaining -= frames
             position += frames
     assert sum(s["duration_frames"] for s in segments) == target_frames
-    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "style": style.slug if style is not None else None, "dynamic_mix": mix.to_dict() if mix is not None else None, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated"]}
+    return {"fps": FPS, "duration_seconds": duration, "duration_frames": target_frames, "style": style.slug if style is not None else None, "dynamic_mix": mix.to_dict() if mix is not None else None, "section_energy": section_energy or {}, "segments": segments, "warnings": ["Shot categories are model suggestions or manually supplied", "Premiere import and non-25fps sources are not validated"]}
