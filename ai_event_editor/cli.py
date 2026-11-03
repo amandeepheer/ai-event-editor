@@ -51,6 +51,7 @@ def main():
     p.add_argument("--style", default=None, help="Style slug")
     p.add_argument("--dynamic-mix", action="store_true", help="Auto mix cinematic, energetic, fast cuts and emotional")
     p.add_argument("--mix-energy", type=int, default=75, help="Mix energy 0-100")
+    p.add_argument("--section-energy", help='JSON file of per-category energy values, e.g. {"drone":25,"dancing":95}')
     p.add_argument("--styles-dir", default="my-styles")
     p.add_argument("--xml", default="recap.xml")
     p.add_argument("--plan", default="edit-plan.json")
@@ -113,7 +114,8 @@ def main():
         mix = DynamicMix(energy=args.mix_energy) if args.dynamic_mix else None
         if mix is not None and style is not None:
             parser.error("Choose --style or --dynamic-mix, not both")
-        result = plan(shots, beat_times, duration=args.duration, style=style, mix=mix)
+        section_energy = json.loads(Path(args.section_energy).read_text(encoding="utf-8")) if args.section_energy else None
+        result = plan(shots, beat_times, duration=args.duration, style=style, mix=mix, section_energy=section_energy)
         Path(args.plan).write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(f"Plan: {args.plan}")
         print(f"Premiere XML candidate: {export(result, args.xml, args.music, audio_start=args.audio_start, audio_end=args.audio_end)}")
