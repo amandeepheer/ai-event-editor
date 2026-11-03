@@ -13,8 +13,14 @@ def main():
     p = sub.add_parser("scan")
     p.add_argument("folder")
     p.add_argument("--output", default="media-inventory.json")
+    p = sub.add_parser("preview-audio")
+    p.add_argument("music")
+    p.add_argument("--audio-start", type=float, required=True)
+    p.add_argument("--audio-end", type=float, required=True)
     p = sub.add_parser("beats")
     p.add_argument("music")
+    p.add_argument("--audio-start", type=float, default=0)
+    p.add_argument("--audio-end", type=float)
     p.add_argument("--output", default="beats.json")
     p = sub.add_parser("analyze")
     p.add_argument("folder")
@@ -32,6 +38,9 @@ def main():
     p.add_argument("shots")
     p.add_argument("--beats")
     p.add_argument("--music")
+    p.add_argument("--audio-start", type=float, default=0)
+    p.add_argument("--audio-end", type=float)
+    p.add_argument("--analyze-music", action="store_true", help="Detect beats in selected excerpt")
     p.add_argument("--duration", type=int, default=60, help="30 to 300 seconds")
     p.add_argument("--style", default=None, help="Style slug")
     p.add_argument("--dynamic-mix", action="store_true", help="Auto mix cinematic, energetic, fast cuts and emotional")
@@ -44,8 +53,11 @@ def main():
         data = scan(args.folder)
         Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
         print(f"Found {len(data)} clips: {args.output}")
+    elif args.command == "preview-audio":
+        from .music import preview_audio
+        preview_audio(args.music, args.audio_start, args.audio_end)
     elif args.command == "beats":
-        data = detect_beats(args.music)
+        data = detect_beats(args.music, start=args.audio_start, end=args.audio_end)
         Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
         print(f"Detected {len(data)} beats: {args.output}")
     elif args.command == "analyze":
@@ -66,7 +78,20 @@ def main():
     else:
         from .styles import load_style
         shots = [Shot.from_dict(x) for x in json.loads(Path(args.shots).read_text(encoding="utf-8"))]
-        beat_times = json.loads(Path(args.beats).read_text(encoding="utf-8")) if args.beats else []
+        if args.audio_end is not None:
+            from .music import AudioRange
+            selection = AudioRange(args.audio_start, args.audio_end).validate()
+            if selection.duration < args.duration:
+                parser.error("Audio selection must be at least as long as video duration")
+        elif args.audio_start != 0:
+            parser.error("--audio-end is required with --audio-start")
+        if (args.audio_start != 0 or args.audio_end is not None) and not args.music:
+            parser.error("Audio range requires --music")
+        if args.analyze_music and not args.music:
+            parser.error("--analyze-music requires --music")
+        if args.analyze_music and args.beats:
+            parser.error("Choose --beats or --analyze-music")
+        beat_times = (detect_beats(args.music, start=args.audio_start, end=args.audio_end) if args.analyze_music else json.loads(Path(args.beats).read_text(encoding="utf-8")) if args.beats else [])
         style = load_style(args.style, args.styles_dir) if args.style else None
         from .dynamic_mix import DynamicMix
         mix = DynamicMix(energy=args.mix_energy) if args.dynamic_mix else None
@@ -75,6 +100,6 @@ def main():
         result = plan(shots, beat_times, duration=args.duration, style=style, mix=mix)
         Path(args.plan).write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(f"Plan: {args.plan}")
-        print(f"Premiere XML candidate: {export(result, args.xml, args.music)}")
+        print(f"Premiere XML candidate: {export(result, args.xml, args.music, audio_start=args.audio_start, audio_end=args.audio_end)}")
 if __name__ == "__main__":
     main()
