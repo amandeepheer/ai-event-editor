@@ -6,7 +6,14 @@ def element(parent, tag, value=None, **attrs):
     if value is not None:
         node.text = str(value)
     return node
-def export(plan: dict, output: str, music: str | None = None) -> str:
+def export(plan: dict, output: str, music: str | None = None, audio_start: float = 0, audio_end: float | None = None) -> str:
+    from .music import AudioRange
+    if audio_end is not None:
+        selection = AudioRange(audio_start, audio_end).validate()
+        if selection.duration * plan["fps"] + 1e-6 < plan["duration_frames"]:
+            raise ValueError("Selected audio excerpt is shorter than the video")
+    elif audio_start != 0:
+        raise ValueError("Audio end is required when audio start is specified")
     root = ET.Element("xmeml", {"version": "4"})
     sequence = element(root, "sequence", id="sequence-1")
     element(sequence, "name", "Energetic Event Recap - 60 seconds")
@@ -35,8 +42,9 @@ def export(plan: dict, output: str, music: str | None = None) -> str:
         element(clip, "name", Path(music).name)
         element(clip, "start", 0)
         element(clip, "end", plan["duration_frames"])
-        element(clip, "in", 0)
-        element(clip, "out", plan["duration_frames"])
+        audio_in = round(audio_start * plan["fps"])
+        element(clip, "in", audio_in)
+        element(clip, "out", audio_in + plan["duration_frames"])
         file = element(clip, "file", id="music-file")
         element(file, "name", Path(music).name)
         element(file, "pathurl", Path(music).expanduser().resolve().as_uri())
