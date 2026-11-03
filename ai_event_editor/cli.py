@@ -26,6 +26,12 @@ def main():
     p.add_argument("folder")
     p.add_argument("--output", default="shot-candidates.json")
     p.add_argument("--max-clips", type=int, default=None)
+    p = sub.add_parser("select-shots")
+    p.add_argument("candidates", help="JSON output from analyze")
+    p.add_argument("--output", default="selected-shots.json")
+    p.add_argument("--report", default="selection-report.json")
+    p.add_argument("--min-confidence", type=float, default=0.0)
+    p.add_argument("--max-per-category", type=int, default=None)
     p = sub.add_parser("styles")
     p.add_argument("--directory", default="my-styles")
     p = sub.add_parser("learn-style")
@@ -65,6 +71,16 @@ def main():
         data = analyze_folder(args.folder, max_clips=args.max_clips)
         Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
         print(f"Generated {len(data)} candidates: {args.output}")
+    elif args.command == "select-shots":
+        from .auto_selection import select_shots, selection_report
+        candidates = json.loads(Path(args.candidates).read_text(encoding="utf-8"))
+        selected = select_shots(candidates, min_confidence=args.min_confidence,
+                                max_per_category=args.max_per_category)
+        Path(args.output).write_text(json.dumps(selected, indent=2), encoding="utf-8")
+        report = selection_report(selected)
+        Path(args.report).write_text(json.dumps(report, indent=2), encoding="utf-8")
+        print(f"Selected {len(selected)} non-overlapping shots: {args.output}")
+        print(json.dumps(report, indent=2))
     elif args.command == "styles":
         from .styles import PRESETS
         print("\\n".join(f"{slug}: {style.name}" for slug, style in PRESETS.items()))
