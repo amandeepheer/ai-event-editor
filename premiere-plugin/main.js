@@ -1,4 +1,8 @@
 /* Non-destructive Premiere UXP panel MVP. No timeline mutations yet. */
+try {
+  const { entrypoints } = require("uxp");
+  entrypoints.setup({ panels: { "ai-event-editor": { show() {} } } });
+} catch (error) { /* Allows Node-only validation tests outside Premiere. */ }
 const status = document.getElementById("status");
 function message(value) { status.textContent = value; }
 function validatePlan(value) {
