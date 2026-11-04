@@ -2,6 +2,8 @@
 
 Local-first event highlight editing with one shared Python engine, a Windows-friendly desktop workflow and an experimental Adobe Premiere Pro UXP panel.
 
+**Start here:** [Plain-language user guide](USER_GUIDE.md) — first-time setup, automatic startup, everyday editing, supported instructions, saving work and troubleshooting.
+
 ## Guided desktop workflow
 
 With Python 3.10+ and FFmpeg/FFprobe/FFplay on your PATH:
