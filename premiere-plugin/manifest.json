@@ -1,7 +1,7 @@
 {
   "id": "com.aieventeditor.panel",
   "name": "AI Event Editor",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "main": "index.html",
   "manifestVersion": 5,
   "host": {
@@ -28,9 +28,7 @@
   "requiredPermissions": {
     "localFileSystem": "request",
     "network": {
-      "domains": [
-        "http://127.0.0.1"
-      ]
+      "domains": "all"
     },
     "launchProcess": {
       "extensions": [

@@ -8,11 +8,11 @@ def test_panel_events_cover_local_setup_review_and_build():
     subprocess.run(['node',str(root/'tests'/'panel_workflow.cjs')],cwd=root,check=True)
 
 
-def test_plugin_only_declares_local_engine_network_access():
+def test_plugin_declares_network_compatibility_permission():
     root=Path(__file__).resolve().parents[1]
     manifest=json.loads((root/'premiere-plugin'/'manifest.json').read_text())
-    # UXP matches the host declaration; the client independently fixes port 8765.
-    assert manifest['requiredPermissions']['network']['domains']==['http://127.0.0.1']
+    # Local-host entries failed on the installed Premiere host; the client enforces loopback.
+    assert manifest['requiredPermissions']['network']['domains']=='all'
 
 
 def test_loopback_client_permission_failure_and_fixed_destination():

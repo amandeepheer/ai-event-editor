@@ -20,7 +20,7 @@ class EngineClient {
         try { response=await this.fetcher(this.base+path,options); }
         catch(cause) {
           if (/permission denied|manifest entry not found/i.test(String(cause && cause.message || cause))) {
-            const error=new Error('Premiere blocked the plugin network permission. Install the updated AI Event Editor panel (0.5.1 or newer), fully close both Premiere versions, then reopen Premiere 2026. Reinstall the panel through Setup and Status; a pairing code cannot fix this permission error.');
+            const error=new Error('Premiere blocked the plugin network permission. Install the updated AI Event Editor panel (0.5.2 or newer), fully close both Premiere versions, then reopen Premiere 2026. Reinstall the panel through Setup and Status; a pairing code cannot fix this permission error.');
             error.preventLaunch=true;throw error;
           }
           throw cause;

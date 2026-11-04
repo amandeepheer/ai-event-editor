@@ -63,7 +63,7 @@ def main():
     with zipfile.ZipFile(app/'AIEventEditor-Premiere.ccx') as package:
         manifest=json.loads(package.read('manifest.json'))
         assert manifest['host']['app']=='premierepro'
-        assert manifest['requiredPermissions']['network']['domains']==['http://127.0.0.1']
+        assert manifest['requiredPermissions']['network']['domains']=='all'
         assert 'project-media.js' in package.namelist()
         assert package.testzip() is None
     print('PASS: silent installer, bundled Python runtime, media download/checksum, frozen helper HTTP, project-media video/audio classification, thumbnails, typed music build and CCX structure. Native Adobe selection and timeline creation not tested.')

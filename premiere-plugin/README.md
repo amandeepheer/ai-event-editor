@@ -1,6 +1,6 @@
 # AI Event Editor — Premiere panel
 
-Version 0.5.1 changes the network permission from the port-qualified entry to `http://127.0.0.1`. The request client independently enforces `http://127.0.0.1:8765` on every call and rejects alternate hosts/ports and redirects. A manifest permission denial now stops automatic launching and displays an update-panel message. Reinstall the updated CCX and cold-restart Premiere; Adobe permission matching requires the user's installed-host retest.
+Version 0.5.2 uses the documented `domains: "all"` manifest permission after both port-qualified and host-only local entries failed on installed Premiere 26.5.2. This grants broader host permission; application requests remain restricted to `http://127.0.0.1:8765`, with alternate hosts/ports and redirects rejected. No cloud endpoint is used. Permission denials stop automatic launching and show an update message. The panel displays its version at the top. Reinstall the CCX and cold-restart Premiere; this compatibility workaround needs installed-host retesting.
 
 The panel now runs setup, music selection, thumbnail review, Keep/Reject/Must include, supported typed instructions and local plan generation through the shared Python engine. It can then request a new editable native Premiere sequence. Editing can stay inside Premiere; opening the standalone desktop app or transferring JSON is not required.
 
