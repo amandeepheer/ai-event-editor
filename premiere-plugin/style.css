@@ -11,3 +11,11 @@ input[type="number"],input[type="password"]{height:40px;min-height:40px;padding:
 .music-range{flex-direction:column}
 .music-range>div{flex:none;width:100%}
 .music-range input{display:block;width:100%;margin:0}
+
+/* The next action stays visible above the current guided step. */
+.next-action{background:#292719;border:1px solid #635723;border-radius:6px;padding:12px;line-height:1.5;color:#f1df99}
+#engine-indicator{margin:10px 0 0;font-size:13px}
+#screen-setup .row{flex-direction:column}
+#screen-setup .row>div{flex:none;width:100%}
+#ai-options,#manual-connection{border-top:1px solid #454545;margin-top:12px;padding-top:8px}
+.steps button:disabled{opacity:.5;cursor:default}

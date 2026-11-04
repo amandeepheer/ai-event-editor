@@ -14,16 +14,42 @@ const client=new EngineClient();
 const {AutoStart}=require('./autostart.js');
 const uxp=require('uxp');
 const automatic=new AutoStart({client,storage:uxp.storage.localFileSystem,shell:uxp.shell,platform:require('os').platform(),progress:message});
-const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,busy:false,connected:false,capabilities:null,projectId:null,projectAudio:[],musicPending:false};
+const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,created:false,busy:false,connected:false,capabilities:null,projectId:null,projectAudio:[],musicPending:false};
 const pageSize=12;
 function message(value){$('status').textContent=value;}
+function updateWorkflow(){
+  const prepared=Boolean(state.session&&state.candidates.length);
+  const ready=Boolean(state.plan);
+  $('engine-indicator').textContent=state.connected?'Engine: connected · Processing stays on this PC':'Engine: not connected · Open Connection & setup';
+  $('step-review').disabled=state.busy||!prepared;
+  $('step-create').disabled=state.busy||!ready;
+  $('prepare').disabled=state.busy||!state.connected||!state.paths.length||state.musicPending;
+  $('build').disabled=state.busy||!state.connected||!prepared||!state.candidates.some(c=>c.decision!=='reject');
+  $('confirm-create').disabled=state.busy||!ready;
+  $('create-sequence').disabled=state.busy||!ready||!$('confirm-create').checked;
+  $('save-plan').disabled=state.busy||!ready;
+  $('previous').disabled=state.busy||!prepared||state.page===0;
+  $('next').disabled=state.busy||!prepared||(state.page+1)*pageSize>=state.candidates.length;
+  $('preview-music').disabled=state.busy||!state.music;
+  $('next-action').textContent=state.busy?'Working… Please wait for this step to finish.':
+    !state.connected?'Open Connection & setup to connect your local engine.':
+    ready&&state.created?'Timeline created. Play it in Premiere and continue editing there.':
+    ready?'Your edit is ready. Review the summary, tick the confirmation, then create the timeline.':
+    !state.paths.length?'Step 1: Choose videos from Premiere or your computer.':
+    state.musicPending?'Choose one of the selected audio files as music, or choose No music.':
+    !prepared?'Choose music and length, then click Continue → Review shots.':
+    !state.candidates.some(c=>c.decision!=='reject')?'Keep at least one shot to continue.':
+    'Review the shots, then click Continue → Prepare timeline.';
+}
 function showStep(step){
+  if(step==='review'&&!(state.session&&state.candidates.length)){message('Choose your footage and click Continue → Review shots first.');return;}
+  if(step==='create'&&!state.plan){message('Review your shots and click Continue → Prepare timeline first.');return;}
   for(const name of ['setup','review','create']){
     $('screen-'+name).hidden=name!==step;
     $('step-'+name).setAttribute('aria-pressed',String(name===step));
   }
 }
-function invalidate(){state.plan=null;$('plan').value='';$('confirm-create').checked=false;$('edit-summary').textContent='Inputs changed. Build the reviewed edit again.';}
+function invalidate(){state.created=false;state.plan=null;$('plan').value='';$('confirm-create').checked=false;$('edit-summary').textContent='Settings changed. Return to Review and prepare the timeline again.';updateWorkflow();}
 function selectedDuration(){
   if($('duration-preset').value==='auto')throw new Error('Choose a length from 30–300 seconds; automatic length is not available yet.');
   const seconds=Number($('duration-preset').value==='custom'?$('custom-seconds').value:$('duration-preset').value);
@@ -51,6 +77,7 @@ function lock(value){
   state.busy=value;
   for(const el of document.querySelectorAll('button,input,select,textarea'))el.disabled=value;
   if(!value)applyCapabilities();
+  updateWorkflow();
 }
 async function perform(work){
   if(state.busy)return;
@@ -87,7 +114,7 @@ async function useProjectMedia(){
   $('footage-summary').textContent=state.paths.length+' videos from the Project panel';
   const warnings=[...result.skipped,...media.errors];
   $('project-media-report').textContent=state.paths.length+' videos · '+media.audio.length+' audio files. Whole linked source files are used; source In/Out marks, subclip bounds and source effects are not copied.\n'+warnings.join('\n');
-  message(state.paths.length?'Project media ready. Type supported instructions and build, or prepare/review moments first.':'Audio loaded. Select videos and audio together, or add footage with the file picker.');
+  message(state.paths.length?'Footage selected. Choose music and length, then continue to review shots.':'Audio loaded. Select videos and audio together, or add footage with the file picker.');
 }
 async function prepareMoments(){
   if(!state.paths.length)throw new Error('Select videos or a bin in the Project panel and use selected project media, or add footage.');
@@ -108,7 +135,7 @@ async function ensurePrepared(){
   setup(); // Resolve ambiguous music choices before starting expensive analysis.
   if(!state.session)await prepareMoments();
 }
-function setPlan(plan){state.plan=validatePlan(plan);$('plan').value=JSON.stringify(state.plan,null,2);$('confirm-create').checked=false;const used=new Set(state.plan.segments.map(s=>s.path)).size;$('edit-summary').textContent=state.plan.duration_seconds+' seconds · '+state.plan.segments.length+' editable video segments · '+used+' source videos · '+state.plan.fps+' fps\n'+(state.plan.warnings||[]).join('\n');showStep('create');}
+function setPlan(plan){state.created=false;state.plan=validatePlan(plan);$('plan').value=JSON.stringify(state.plan,null,2);$('confirm-create').checked=false;const used=new Set(state.plan.segments.map(s=>s.path)).size;$('edit-summary').textContent=state.plan.duration_seconds+' seconds · '+state.plan.segments.length+' editable video segments · '+used+' source videos · '+state.plan.fps+' fps\n'+(state.plan.warnings||[]).join('\n');showStep('create');updateWorkflow();}
 function adopt(result){
   const s=result.setup;
   if(['30','60','120','300'].includes(String(s.duration)))$('duration-preset').value=String(s.duration);
@@ -143,7 +170,7 @@ function drawShots(){
     preview.addEventListener('click',()=>perform(()=>previewSource(candidate.path,candidate.start,candidate.end)));buttons.appendChild(preview);card.appendChild(buttons);
     const select=document.createElement('select');select.setAttribute('aria-label','Moment category');
     for(const name of ['drone','stalls','performance','dancing','crowd','finale']){const option=document.createElement('option');option.value=name;option.textContent=name;select.appendChild(option);}
-    select.value=candidate.category;select.addEventListener('change',()=>{candidate.category=select.value;invalidate();});card.appendChild(select);
+    select.hidden=!state.showCategories;select.value=candidate.category;select.addEventListener('change',()=>{candidate.category=select.value;invalidate();});card.appendChild(select);
     if(candidate.warning){const warning=document.createElement('p');warning.textContent=candidate.warning;card.appendChild(warning);}
     root.appendChild(card);
   }
@@ -157,6 +184,11 @@ async function previewSource(path,start,end){
 }
 for(const id of ['audio-start','audio-end','custom-seconds','instruction'])$(id).addEventListener('input',invalidate);
 for(const step of ['setup','review','create'])bind('step-'+step,async()=>showStep(step));
+bind('back-to-media',async()=>showStep('setup'));
+bind('back-to-review',async()=>showStep('review'));
+bind('toggle-ai-options',async()=>{$('ai-options').hidden=!$('ai-options').hidden;});
+bind('toggle-manual-connection',async()=>{$('manual-connection').hidden=!$('manual-connection').hidden;});
+$('confirm-create').addEventListener('change',updateWorkflow);
 bind('toggle-connection',async()=>{$('connection-panel').hidden=!$('connection-panel').hidden;});
 bind('toggle-utilities',async()=>{$('utilities').hidden=!$('utilities').hidden;});
 for(const id of ['duration-preset','style','pacing','use-ai','use-language-model'])$(id).addEventListener('change',()=>{if(id==='use-ai')state.session=null;invalidate();updateDuration();});
@@ -199,7 +231,18 @@ $('project-music').addEventListener('change',()=>{
 });
 bind('clear-music',async()=>{projectMusicChoices([]);invalidate();});
 bind('preview-music',async()=>{if(!state.music)throw new Error('Choose music first.');const s=setup();await previewSource(state.music,s.audio_start,s.audio_end===null?s.audio_start+s.duration:s.audio_end);});
-bind('prepare',prepareMoments);
+bind('prepare',async()=>{
+  setup();
+  await prepareMoments();
+  if($('instruction').value.trim()){
+    const body=payload();
+    const result=body.instruction_mode==='ollama'?await client.operation('/v1/interpret-local',body,message):await client.request('/v1/interpret',body);
+    await checkProject();adopt(result);
+    if(result.unsupported.length){showStep('setup');message('Please revise the instructions shown above before continuing.');return;}
+  }
+  showStep('review');message('Shots ready. Keep, reject or mark Must include, then continue to prepare your timeline.');
+});
+bind('toggle-categories',async()=>{state.showCategories=!state.showCategories;drawShots();});
 bind('previous',async()=>{state.page=Math.max(0,state.page-1);drawShots();});
 bind('next',async()=>{state.page++;drawShots();});
 bind('interpret',async()=>{await ensurePrepared();const body=payload();const result=body.instruction_mode==='ollama'?await client.operation('/v1/interpret-local',body,message):await client.request('/v1/interpret',body);await checkProject();adopt(result);showStep('setup');message(result.unsupported.length?'Revise unsupported instructions before building.':'Instruction changes are shown above. Continue to Review when ready.');});
@@ -211,7 +254,7 @@ bind('build',async()=>{
 bind('create-sequence',async()=>{
   if(!$('confirm-create').checked)throw new Error('Confirm creation of a new sequence first.');
   if(!state.plan)throw new Error('Build or open an edit first.');
-  try{const result=await applyNewSequence(require("premierepro"),state.plan,message,{expectedProjectId:state.projectId});message('Created '+result.name+' with '+result.clips+' editable clips. Continue editing and export with Premiere’s normal tools.');}
+  try{const result=await applyNewSequence(require("premierepro"),state.plan,message,{expectedProjectId:state.projectId});state.created=true;message('Created '+result.name+' with '+result.clips+' editable clips. Continue editing and export with Premiere’s normal tools.');$('next-action').textContent='Timeline created. Review and play it in Premiere, then export when ready.';}
   finally{$('confirm-create').checked=false;}
 });
 bind('inspect',async()=>{const premiere=require("premierepro");const project=await premiere.Project.getActiveProject();if(!project)throw new Error('Open a Premiere project first.');const sequence=await project.getActiveSequence();message(sequence?'Active sequence: '+sequence.name:'Premiere connected. No active sequence.');});
@@ -230,8 +273,9 @@ bind('save-plan',async()=>{if(!state.plan)throw new Error('Build or open an edit
 bind('open-plan',async()=>{const file=await require('uxp').storage.localFileSystem.getFileForOpening({types:['json'],allowMultiple:false});if(file){setPlan(JSON.parse(await file.read()));message('Saved edit opened. Review before creating a sequence.');}});
 bind('toggle-plan',async()=>{$('plan-tools').hidden=!$('plan-tools').hidden;});
 bind('validate',async()=>{const plan=validatePlan($('plan').value);const report=preflightPlan(plan);setPlan(plan);message('Validated '+report.clips+' clips · '+report.duration_seconds+' seconds. No timeline edits applied.');});
-$('plan').addEventListener('input',()=>{state.plan=null;$('confirm-create').checked=false;});
+$('plan').addEventListener('input',()=>{state.plan=null;state.created=false;$('confirm-create').checked=false;updateWorkflow();});
 if(typeof module!=='undefined')module.exports={state,client,automatic,onPanelShow,selectedDuration,setup,payload,drawShots,previewSource};
 
+updateWorkflow();
 // Some UXP hosts deliver the first show during setup; cover that initial load too.
 setTimeout(()=>onPanelShow(),0);

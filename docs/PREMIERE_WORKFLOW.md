@@ -95,3 +95,26 @@ A panel-only update does not update the Python planner in an installed Windows
 helper. Install the matching 0.5.3 Windows application to receive the planner fix;
 keep existing model downloads, and restart the old helper and Premiere afterward.
 Installed Premiere rendering and real-media edits still require host verification.
+
+
+## Guided panel update (0.5.5)
+
+The panel now leads through Media → Review → Timeline. Choose footage from
+Premiere or the file picker, choose optional music, length and pacing, and enter
+optional instructions. **Continue → Review shots** prepares footage and applies
+supported instructions. Review Keep/Reject/Must include, then use **Continue →
+Prepare timeline**. Check the resulting summary, tick the new-sequence
+confirmation and choose **Create timeline in Premiere**.
+
+Review is unavailable until moments exist; Timeline is unavailable until a plan
+exists. Changing settings or shot choices invalidates the old plan and disables
+creation. Rejecting every shot disables planning. The panel shows connection
+state and the next action above the workflow. AI options, manual pairing,
+category adjustments and diagnostic/JSON tools remain available behind explicit
+controls. The unavailable automatic-length option is no longer offered.
+
+This is a panel-only update, compatible with the 0.5.3 engine. Install the updated
+CCX; engine and model reinstallation is unnecessary. Event tests cover navigation
+guards, instruction application before review, stale-plan prevention and creation
+confirmation. They use DOM/Adobe test doubles; actual host rendering still needs
+a Premiere check.
