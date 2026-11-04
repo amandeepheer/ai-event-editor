@@ -1,13 +1,17 @@
 /* Premiere-first local workflow. AI/planning logic lives in the Python engine. */
+let onPanelShow=()=>{};
 try {
   const {entrypoints}=require('uxp');
-  entrypoints.setup({panels:{'ai-event-editor':{show(){}}}});
+  entrypoints.setup({panels:{'ai-event-editor':{show(){onPanelShow();}}}});
 } catch(error) { /* Explicit test DOM can run outside Adobe. */ }
 const {EngineClient}=require('./engine.js');
 const {validatePlan,preflightPlan}=require('./edit-plan.js');
 const {applyNewSequence}=require('./premiere.js');
 const $=id=>document.getElementById(id);
 const client=new EngineClient();
+const {AutoStart}=require('./autostart.js');
+const uxp=require('uxp');
+const automatic=new AutoStart({client,storage:uxp.storage.localFileSystem,shell:uxp.shell,platform:require('os').platform(),progress:message});
 const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,busy:false,connected:false};
 const pageSize=12;
 function message(value){$('status').textContent=value;}
@@ -92,6 +96,17 @@ async function previewSource(path,start,end){
 for(const id of ['audio-start','audio-end','custom-seconds','instruction'])$(id).addEventListener('input',invalidate);
 for(const id of ['duration-preset','style','pacing','use-ai'])$(id).addEventListener('change',()=>{if(id==='use-ai')state.session=null;invalidate();updateDuration();});
 $('custom-seconds').addEventListener('input',updateDuration);updateDuration();
+bind('configure-autostart',async()=>{
+  const file=await uxp.storage.localFileSystem.getFileForOpening({types:['json'],allowMultiple:false});
+  if(!file)return;
+  await automatic.configure(file);state.connected=true;
+  $('connection-status').textContent='Automatic startup is configured. The panel will connect when it opens.';
+  message('Connected. You can prepare footage inside Premiere.');
+});
+onPanelShow=()=>perform(async()=>{
+  try{if(await automatic.restore()){state.connected=true;$('connection-status').textContent='Connected automatically to your local engine.';message('Ready. Add footage or continue reviewing your edit.');}}
+  catch(error){state.connected=false;$('connection-status').textContent='Automatic connection needs attention.';throw error;}
+});
 bind('connect',async()=>{
   state.connected=false;$('connection-status').textContent='Connecting to the local helper…';
   let health;
@@ -141,4 +156,7 @@ bind('open-plan',async()=>{const file=await require('uxp').storage.localFileSyst
 bind('toggle-plan',async()=>{$('plan-tools').hidden=!$('plan-tools').hidden;});
 bind('validate',async()=>{const plan=validatePlan($('plan').value);const report=preflightPlan(plan);setPlan(plan);message('Validated '+report.clips+' clips · '+report.duration_seconds+' seconds. No timeline edits applied.');});
 $('plan').addEventListener('input',()=>{state.plan=null;$('confirm-create').checked=false;});
-if(typeof module!=='undefined')module.exports={state,client,selectedDuration,setup,payload,drawShots,previewSource};
+if(typeof module!=='undefined')module.exports={state,client,automatic,onPanelShow,selectedDuration,setup,payload,drawShots,previewSource};
+
+// Some UXP hosts deliver the first show during setup; cover that initial load too.
+setTimeout(()=>onPanelShow(),0);

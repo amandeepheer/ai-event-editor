@@ -21,7 +21,7 @@ The existing manual plan renderer is still available through **Render an existin
 
 ## Premiere-first workflow (experimental)
 
-Start the local helper with `python -m ai_event_editor.service` (or `scripts/Start-Local-Engine.cmd` on Windows). Load `premiere-plugin/` with Adobe UXP Developer Tool, open a Premiere project and connect using the helper's pairing code.
+On Windows, run `scripts/Configure-Premiere-Autostart.cmd` once. Load `premiere-plugin/` with Adobe UXP Developer Tool, click **Set up automatic start** and select the generated `engine-connection.json`. The panel remembers the connection and starts or reconnects to the background helper when opened. Adobe may show a launch-permission dialog, with an option to remember your choice. Manual startup and code pairing remain available as a fallback.
 
 Inside the panel: **Add footage → choose music/length/style → Prepare moments → review thumbnails and Keep/Reject/Must include → type supported instructions → Build reviewed edit → Create Premiere sequence**. Source and music previews open in Premiere's Source Monitor. Continue editing and export with Premiere's normal tools. There is no requirement to open the standalone editor or transfer JSON files.
 
@@ -29,14 +29,14 @@ Typed instructions currently support duration, pacing, style and explicit includ
 
 Native assembly requires Premiere 26.3+. The adapter creates a new bin, source subclips and an editable sequence; it does not edit existing sequences, change source marks, delete items or automatically save the project. Default Premiere geometry is retained. Native creation, Source Monitor preview and UXP network behavior still need verification in installed Premiere. Automated panel/native tests use explicit test doubles; real loopback HTTP and FFmpeg tests also run.
 
-The helper requires manual startup and pairing in this development preview. A packaged installer and automatic companion startup remain pending. See [Premiere setup and supported instructions](docs/PREMIERE_WORKFLOW.md).
+Automatic startup requires the one-time Windows configuration above and Python with `pythonw.exe`. A packaged installer remains pending. Windows/Premiere launch behavior has not yet been verified on the user’s computer. See [Premiere setup and supported instructions](docs/PREMIERE_WORKFLOW.md).
 
 ## Current limitations
 
 - Windows visual QA and real-camera testing are pending; automated CI runs on Linux.
 - Beat/moment analysis is heuristic. Basic mode does not rank meaningful moments; optional CLIP labels require review. Local music RMS/onset analysis varies pacing around louder passages and approximate onsets; it is not reliable BPM, musical-structure or emotion recognition.
 - Speed ramps and slow motion are planning metadata; rendering refuses them. Style choices affect pacing/coverage, not colour grading or implemented transitions.
-- Effects intensity, interview quote selection, speech ducking, editable native titles, a packaged installer, automatic companion startup and general language understanding remain later milestones.
+- Effects intensity, interview quote selection, speech ducking, editable native titles, a packaged installer and general language understanding remain later milestones.
 - Experimental XML export remains available and is not proof of native Premiere compatibility.
 
 See [workflow details](docs/GUIDED_WORKFLOW.md), [edit-plan contract](docs/EDIT_PLAN.md), and [development plan](docs/DEVELOPMENT_PLAN.md).

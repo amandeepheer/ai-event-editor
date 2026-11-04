@@ -60,4 +60,9 @@ Next acceptance gate: installed Windows/Premiere walkthrough using real Sony/dro
 
 The panel now performs footage/music setup, review, typed instruction feedback and plan generation through an authenticated loopback companion. The standalone UI and legacy plan handoff remain available but are no longer required for this workflow. Previews open in Premiere's Source Monitor. Current typed interpretation is limited offline parsing of duration, style, pacing and explicit category inclusion/exclusion; unsupported requests block generation.
 
-Completed code is covered by local HTTP integration tests, real FFmpeg tests and panel/native API test doubles. Installed Windows/Premiere verification, packaged installation/automatic helper startup, general instruction understanding and advanced effects remain acceptance gates. See `PREMIERE_WORKFLOW.md` for accurate startup and feature boundaries.
+Completed code is covered by local HTTP integration tests, real FFmpeg tests and panel/native API test doubles. Installed Windows/Premiere verification, packaged installation, general instruction understanding and advanced effects remain acceptance gates. See `PREMIERE_WORKFLOW.md` for accurate startup and feature boundaries.
+
+
+## Automatic companion startup
+
+One-time per-user Windows configuration generates a background launcher and private connection file. The panel remembers a user-approved UXP file token, reconnects on opening, and launches the fixed helper only when no running service responds. Adobe launch consent is handled normally and can be remembered. Duplicate launch prevention, timeout, denial, expired file access and invalid pairing are covered by tests. A packaged installer, installed Windows/Adobe verification and automatic review-state recovery remain pending.

@@ -7,8 +7,8 @@ This is an integrated development preview, not a verified installer release. Aut
 ## First-time setup on Windows
 
 1. Install Python 3.10+ and FFmpeg (including FFprobe) on PATH. From the repository directory run `python -m pip install -e .`.
-2. Start the processing helper with `python -m ai_event_editor.service`, or double-click `scripts/Start-Local-Engine.cmd`. Keep it running; the window can be minimized. It prints a pairing code. This helper is not the standalone editor.
-3. Load `premiere-plugin/` through Adobe UXP Developer Tool and open a Premiere project. Paste the pairing code into the panel and click **Connect**. The service uses port 8765; if the port is already occupied, close the duplicate helper rather than launching many copies.
+2. Run `scripts/Configure-Premiere-Autostart.cmd` once (or `python -m ai_event_editor.service --configure-plugin`). It creates a user-local launcher and `engine-connection.json`, and prints the file location. Python for Windows must include `pythonw.exe`.
+3. Load `premiere-plugin/` through Adobe UXP Developer Tool and open a Premiere project. Click **Set up automatic start**, select the generated `engine-connection.json` and allow Adobe’s launch request if shown. Adobe can remember the permission choice. The panel remembers the selected configuration using a UXP persistent file token. On subsequent opens it reconnects to a running helper or starts it, then waits for readiness. Manual code pairing remains a fallback. Port 8765 is fixed; incompatible/unauthorized services on that port produce errors rather than automatic relaunches.
 4. **Add footage**, **Choose music**, set music start/end, output length (30–300 seconds), style and pacing. **Preview in Premiere** opens source media in Premiere's Source Monitor at the selected time. Playback stays under Premiere's controls; the displayed end time is a review guide, not a playback lock.
 5. Click **Prepare moments**. The default creates unranked windows and local thumbnails. Optional cached CLIP suggestions require vision extras and already downloaded model weights; the panel does not download a model.
 6. Review thumbnails, preview moments, correct categories and choose Keep, Reject or Must include. Reviews are paginated to keep the panel usable with larger events. Keep is eligible; Must include guarantees an excerpt from the moment when it fits.
@@ -17,7 +17,7 @@ This is an integrated development preview, not a verified installer release. Aut
 
 Native creation and Source Monitor seeking require Premiere 26.3+ and still need testing in an installed Premiere environment. Earlier compatible UXP hosts can retain inspect/validate functions. Source files, existing sequences and source marks are not overwritten. Failure can leave newly imported items or a partial new sequence for review; nothing is automatically deleted or saved.
 
-The helper currently requires manual startup and pairing. A packaged installer, automatic companion startup, secure saved pairing and automatic session recovery are not implemented. Review state lives in the open panel and bounded helper sessions. Save the final edit with **Save edit** before closing; **Open saved edit** and legacy JSON validation remain available. Standalone review sessions and the standalone editor remain available separately.
+A packaged installer and automatic review-session recovery are not implemented. Automatic helper startup and restored pairing now use the one-time setup above; actual Windows/Adobe launch and permission behavior still requires installed-host verification. Review state lives in the open panel and bounded helper sessions. Save the final edit with **Save edit** before closing; **Open saved edit** and legacy JSON validation remain available. Standalone review sessions and the standalone editor remain available separately.
 
 ## Supported typed instructions
 
@@ -38,7 +38,7 @@ Instructions regenerate a proposed edit from reviewed source moments. They do no
 
 The stdlib helper binds only `127.0.0.1`. The panel declares only `http://127.0.0.1:8765` in its network permissions. Files are read on the local computer and paths/thumbnail data travel only over loopback. No external API, paid service, model download or media upload is used by this connection.
 
-Every endpoint requires the pairing token in an Authorization header. Tokens are never sent in URLs or request logs. The helper also validates the Host header and restricts browser origins, provides no arbitrary file-serving endpoint and rejects unknown/duplicate shot IDs or attempts to replace source paths/ranges through review patches. Thumbnail PNGs are returned as data URLs in authenticated job results. The local pairing token is stored in the current user's application data and displayed by the helper; keep it private. Panel pairing is held only in memory.
+Every endpoint requires the pairing token in an Authorization header. Tokens are never sent in URLs or request logs. The helper also validates the Host header and restricts browser origins, provides no arbitrary file-serving endpoint and rejects unknown/duplicate shot IDs or attempts to replace source paths/ranges through review patches. Thumbnail PNGs are returned as data URLs in authenticated job results. The local pairing token is stored in the current user's application data and displayed by the helper; keep it private. The panel persists only the UXP access token for the user-selected configuration file, not a plaintext pairing secret. Each reconnect rereads that approved file. Manual pairing remains memory-only.
 
 Long operations run in one background worker with status polling; concurrent operations are rejected. Completed job metadata is bounded to 16 jobs and four review sessions. Expired sessions produce a message to prepare footage again. Temporary thumbnails are removed when the helper shuts down. A disconnected panel does not automatically resubmit processing or mutate a timeline.
 
@@ -54,3 +54,14 @@ Adobe references checked for this implementation:
 - https://developer.adobe.com/premiere-pro/uxp/ppro-reference/classes/project
 - https://developer.adobe.com/premiere-pro/uxp/ppro-reference/classes/clipprojectitem
 - https://developer.adobe.com/premiere-pro/uxp/ppro-reference/classes/sequenceeditor
+
+
+## Automatic startup details
+
+The per-user setup creates `Start-AI-Event-Engine.cmd` and `engine-connection.json` under `%LOCALAPPDATA%/AIEventEditor`. No registry edits, administrator permissions or login tasks are added. The generated launcher uses the exact Python installation and project location from setup; it starts `pythonw.exe` with the local engine module in background mode. The short launcher window may flash, but there is no persistent helper console to keep open. Keep the project/Python location available; rerun configuration after moving them.
+
+The plugin only declares `.cmd` launch permission. It launches the fixed filename beside the approved connection file through Adobe's `shell.openPath`, with clear purpose text for Adobe's consent dialog. It does not pass shell commands or command-line parameters through UXP. Adobe may display permission each time unless the user remembers the choice. Denial, moved configuration, invalid pairing, unsupported platforms and startup timeout all produce actionable messages; the panel does not silently fall back to a different executable or repeatedly launch copies.
+
+The helper can remain idle after Premiere closes and is reused on the next opening. Manual startup remains available via `Start-Local-Engine.cmd` or `python -m ai_event_editor.service`. Configuration and launcher generation are tested on synthetic paths; automatic launch/consent are tested with an explicit UXP shell test double. Installed Windows launch, persistence and Adobe dialogs are still unverified.
+
+Launch API reference: https://developer.adobe.com/premiere-pro/uxp/resources/recipes/external-process/

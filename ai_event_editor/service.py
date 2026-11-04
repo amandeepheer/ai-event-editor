@@ -199,8 +199,8 @@ def create_server(engine,port=8765):
     return server
 
 
-def persistent_token():
-    base=Path(os.environ.get('LOCALAPPDATA',Path.home()/'.local'/'share'))/'AIEventEditor'
+def persistent_token(base=None):
+    base=Path(base) if base is not None else Path(os.environ.get('LOCALAPPDATA',Path.home()/'.local'/'share'))/'AIEventEditor'
     base.mkdir(parents=True,exist_ok=True)
     path=base/'engine-token'
     if path.exists():
@@ -212,18 +212,56 @@ def persistent_token():
     return token
 
 
+def configure_plugin(base=None, executable=None, working_directory=None):
+    """Create a per-user Windows launcher and pairing file; no registry/admin edits."""
+    import sys
+    base = Path(base) if base is not None else Path(os.environ.get('LOCALAPPDATA',Path.home()/'.local'/'share'))/'AIEventEditor'
+    if executable is None:
+        background_python=Path(sys.executable).with_name('pythonw.exe')
+        if not background_python.is_file():
+            raise ValueError('Python for Windows must include pythonw.exe for background startup')
+        executable=str(background_python)
+    else:
+        executable=str(executable)
+    working_directory = str(working_directory or Path(__file__).resolve().parents[1])
+    if any(c in executable+working_directory for c in ('%', '"', '\r', '\n')):
+        raise ValueError('Move Python/project to a path without percent signs, quotes or line breaks before configuring the launcher')
+    base.mkdir(parents=True,exist_ok=True)
+    token = persistent_token(base)
+    launcher = base/'Start-AI-Event-Engine.cmd'
+    script = ('@echo off\r\nchcp 65001 >nul\r\nsetlocal DisableDelayedExpansion\r\n'
+              'cd /d "'+working_directory+'" || exit /b 1\r\n'
+              'start "" /b "'+executable+'" -m ai_event_editor.service --background\r\n')
+    launcher.write_text(script,encoding='utf-8',newline='')
+    connection=base/'engine-connection.json'
+    descriptor=os.open(connection,os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600)
+    with os.fdopen(descriptor,'w',encoding='utf-8') as file:
+        json.dump({'configuration_version':1,'engine':'AI Event Editor','base':'http://127.0.0.1:8765',
+                   'token':token,'launcher':'Start-AI-Event-Engine.cmd'},file,indent=2)
+    return connection
+
+
 def main():
     parser=argparse.ArgumentParser(description='Local processing companion for the AI Event Editor Premiere panel')
     parser.add_argument('--port',type=int,default=8765)
+    parser.add_argument('--configure-plugin',action='store_true',help='Create the one-time Windows automatic-start configuration')
+    parser.add_argument('--background',action='store_true',help='Run without console output (Windows plugin launcher)')
     args=parser.parse_args()
+    if args.configure_plugin:
+        if os.name != 'nt': parser.error('Automatic-start installation is currently Windows-only')
+        try: path=configure_plugin()
+        except (ValueError,OSError) as error: parser.error(f'Could not configure automatic startup: {error}')
+        print('In the Premiere panel, click Set up automatic start and select: '+str(path))
+        return
     if not 1 <= args.port <= 65535: parser.error('Port must be 1–65535')
     engine=Engine(persistent_token())
     try: server=create_server(engine,args.port)
     except OSError as error:
         engine.close(); parser.error(f'Could not start local engine: {error}')
-    print(f'AI Event Editor local engine: http://127.0.0.1:{server.server_port}',flush=True)
-    print('Pairing code (paste into the Premiere panel): '+engine.token,flush=True)
-    print('Keep this helper running. Editing stays inside Premiere. Ctrl+C stops the helper.',flush=True)
+    if not args.background:
+        print(f'AI Event Editor local engine: http://127.0.0.1:{server.server_port}',flush=True)
+        print('Pairing code (paste into the Premiere panel): '+engine.token,flush=True)
+        print('Keep this helper running. Editing stays inside Premiere. Ctrl+C stops the helper.',flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass
     finally:

@@ -16,8 +16,10 @@ class EngineClient {
       if (body!==undefined) options.body=JSON.stringify(body);
       const call=(async()=>{
         const response=await this.fetcher(this.base+path,options);
-        const result=await response.json();
-        if (!response.ok) throw new Error(result.error || 'Local engine request failed ('+response.status+')');
+        let result;
+        try{result=await response.json();}
+        catch(cause){const error=new Error('The local port returned an unexpected response. Check for another service using port 8765.');error.preventLaunch=true;throw error;}
+        if (!response.ok) {const error=new Error(result.error || 'Local engine request failed ('+response.status+')');error.status=response.status;throw error;}
         return result;
       })();
       return await Promise.race([call,new Promise((_,reject)=>{
@@ -28,8 +30,8 @@ class EngineClient {
   async connect(token) {
     this.token=token.trim();
     const health=await this.request('/v1/health');
-    if(health.api_version!==1 || health.engine!=='AI Event Editor') throw new Error('Incompatible local engine. Update the plugin and helper together.');
-    if(!health.ffmpeg || !health.ffprobe) throw new Error('Install FFmpeg and FFprobe on the helper PATH, then reconnect.');
+    if(health.api_version!==1 || health.engine!=='AI Event Editor') {const error=new Error('Incompatible local engine. Update the plugin and helper together.');error.preventLaunch=true;throw error;}
+    if(!health.ffmpeg || !health.ffprobe) {const error=new Error('Install FFmpeg and FFprobe on the helper PATH, then reconnect.');error.preventLaunch=true;throw error;}
     return health;
   }
   async operation(path,body,progress=()=>{}) {
