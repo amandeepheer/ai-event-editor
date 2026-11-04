@@ -4,6 +4,8 @@ Local-first event highlight editing with one shared Python engine, a Windows-fri
 
 **Start here:** [Plain-language user guide](USER_GUIDE.md) — first-time setup, automatic startup, everyday editing, supported instructions, saving work and troubleshooting.
 
+**Native Premiere control:** [Capability audit and manual steps](docs/PREMIERE_NATIVE_AUDIT.md). The goal is to control Premiere's own editable tools from instructions. The panel's **Check native tools** inventories available APIs and effect/transition catalogs without applying edits. API availability does not mean a feature is implemented or tested in Premiere.
+
 ## Windows AI Edition installer preview
 
 The [Windows installer workflow](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml) builds **AI-Event-Editor-AI-Setup-0.4.0-Windows-x64.exe**, available in its successful **AI-Event-Editor-AI-Installer** artifact. Extract the download and run Setup. No system Python or terminal commands are needed. Artifacts expire after 30 days; use the latest passing build.
@@ -43,7 +45,7 @@ Automatic startup requires the one-time Windows configuration above and Python w
 
 ## Current limitations
 
-- Windows visual QA and real-camera testing are pending; automated CI runs on Linux.
+- Windows visual QA and real-camera/Premiere testing are pending. Unit/FFmpeg tests run on Linux; Windows CI verifies the packaged installer and real CPU CLIP analysis.
 - Beat/moment analysis is heuristic. Basic mode does not rank meaningful moments; optional CLIP labels require review. Local music RMS/onset analysis varies pacing around louder passages and approximate onsets; it is not reliable BPM, musical-structure or emotion recognition.
 - Speed ramps and slow motion are planning metadata; rendering refuses them. Style choices affect pacing/coverage, not colour grading or implemented transitions.
 - Effects intensity, interview quote selection, speech ducking, editable native titles, NVIDIA performance verification and broader editing capabilities remain later milestones.

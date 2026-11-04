@@ -25,6 +25,7 @@
 <label class="check"><input type="checkbox" id="confirm-create"> Create a new sequence from this reviewed edit</label><button id="create-sequence">Create Premiere sequence</button>
 <p class="hint">Native integration is experimental. Review timing, framing and sound in Premiere. Existing sequences are preserved.</p>
 </section>
+<section><h2>Native Premiere tools</h2><p>Check which editing APIs and effect catalogs your Premiere exposes. This reads information without changing your project. Features still need implementation and editing tests.</p><div class="actions"><button id="check-native-tools" class="secondary">Check native tools</button><button id="save-native-report" class="secondary">Save tool report</button></div><pre id="native-report">No native tool check run yet.</pre></section>
 <section><h2>Saved edits & tools</h2><div class="actions"><button id="save-plan" class="secondary">Save edit</button><button id="open-plan" class="secondary">Open saved edit</button><button id="toggle-plan" class="secondary">Show plan tools</button></div>
 <div id="plan-tools" hidden><label for="plan">Edit plan JSON</label><textarea id="plan" rows="6"></textarea><button id="validate" class="secondary">Validate plan</button></div></section>
 <pre id="status" role="status" aria-live="polite">Ready. Connect the local helper to prepare your footage.</pre>

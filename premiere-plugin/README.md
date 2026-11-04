@@ -12,4 +12,6 @@ Existing saved-plan open/save and JSON validation remain available. Existing seq
 
 See [setup, capabilities and limitations](../docs/PREMIERE_WORKFLOW.md).
 
+See [native-control audit](../docs/PREMIERE_NATIVE_AUDIT.md) for effect/transition, framing, tracking, retiming, title, audio and export routes and manual steps. **Check native tools** reads API presence and installed catalogs without a helper connection or project mutations; **Save tool report** saves the inventory locally. It does not certify editing behavior. Existing native adapters remain experimental.
+
 The AI Edition adds optional managed CLIP package/model setup and local Ollama/Qwen interpretation. Enable the language checkbox only after installing Ollama/Qwen. Unknown phrasing uses a validated schema; unsupported editing features remain blocked. See `../docs/AI_ADDON.md`.

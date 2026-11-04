@@ -3,6 +3,8 @@
 ## Product direction (approved November 2026)
 Build one local-first Python AI editing engine with **Adobe Premiere Pro plugin first** and **optional standalone MP4 rendering**. Work on `main` only. Do not modify FotoDigger. Prefer local processing and low-cost CI; no mandatory paid cloud AI.
 
+Clarified direction: typed instructions should control Premiere's own native editing tools, keeping effects, transitions, source clips and keyframes editable. Native Auto Reframe/tracking must not be replaced by baked external crop files. The [native-control audit](PREMIERE_NATIVE_AUDIT.md) distinguishes documented API routes, existing implementation, host verification and manual steps. A read-only **Check native tools** inventory is available for installed-host discovery; it does not apply edits or mark future features complete.
+
 ## Intended workflow
 1. Open Premiere Pro and the AI Event Editor panel.
 2. Select source clips, music, desired duration (30–300 seconds), and editing style.

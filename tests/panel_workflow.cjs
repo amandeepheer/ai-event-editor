@@ -63,6 +63,14 @@ const click=id=>elements[id].fire('click');
   await click('create-sequence');assert(elements.status.textContent.includes('Confirm'));
   pickers.push({read:async()=>JSON.stringify(makePlan())});await click('open-plan');assert(panel.state.plan);
   await click('inspect');assert(elements.status.textContent.includes('Existing client edit'));
+  const networkCalls=requests.length;
+  await click('check-native-tools');
+  assert(panel.state.capabilities.sequence_open);
+  assert.equal(panel.state.capabilities.host_editing_verified,false);
+  assert(elements['native-report'].textContent.includes('No effects or timeline changes were applied'));
+  assert.equal(requests.length,networkCalls); // No helper/network required for this check.
+  await click('save-native-report');
+  assert.equal(JSON.parse(saved[1]).scope,'API presence only; no editing operations tested');
   await click('clear-music');assert.equal(panel.state.music,'');
   await click('clear-footage');assert.equal(panel.state.candidates.length,0);assert.equal(panel.state.session,null);
   elements['duration-preset'].value='auto';assert.throws(()=>panel.selectedDuration(),/not available/);

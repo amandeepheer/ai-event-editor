@@ -7,12 +7,13 @@ try {
 const {EngineClient}=require('./engine.js');
 const {validatePlan,preflightPlan}=require('./edit-plan.js');
 const {applyNewSequence}=require('./premiere.js');
+const {inspectCapabilities,formatCapabilities}=require('./capabilities.js');
 const $=id=>document.getElementById(id);
 const client=new EngineClient();
 const {AutoStart}=require('./autostart.js');
 const uxp=require('uxp');
 const automatic=new AutoStart({client,storage:uxp.storage.localFileSystem,shell:uxp.shell,platform:require('os').platform(),progress:message});
-const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,busy:false,connected:false};
+const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,busy:false,connected:false,capabilities:null};
 const pageSize=12;
 function message(value){$('status').textContent=value;}
 function invalidate(){state.plan=null;$('plan').value='';$('confirm-create').checked=false;$('edit-summary').textContent='Inputs changed. Build the reviewed edit again.';}
@@ -155,6 +156,17 @@ bind('create-sequence',async()=>{
   finally{$('confirm-create').checked=false;}
 });
 bind('inspect',async()=>{const premiere=require("premierepro");const project=await premiere.Project.getActiveProject();if(!project)throw new Error('Open a Premiere project first.');const sequence=await project.getActiveSequence();message(sequence?'Active sequence: '+sequence.name:'Premiere connected. No active sequence.');});
+bind('check-native-tools',async()=>{
+  state.capabilities=null;$('native-report').textContent='Reading Premiere APIs and installed effect/transition catalogs…';
+  state.capabilities=await inspectCapabilities(require("premierepro"));
+  $('native-report').textContent=formatCapabilities(state.capabilities);
+  message('Native tool inventory ready. This check reads APIs; it does not test or apply edits.');
+});
+bind('save-native-report',async()=>{
+  if(!state.capabilities)throw new Error('Check native tools first.');
+  const file=await require('uxp').storage.localFileSystem.getFileForSaving('premiere-native-capabilities.json',{types:['json']});
+  if(file){await file.write(JSON.stringify(state.capabilities,null,2));message('Native API inventory saved locally. No editing operations were tested.');}
+});
 bind('save-plan',async()=>{if(!state.plan)throw new Error('Build or open an edit first.');const file=await require('uxp').storage.localFileSystem.getFileForSaving('reviewed-edit.json',{types:['json']});if(file){await file.write(JSON.stringify(state.plan,null,2));message('Edit saved.');}});
 bind('open-plan',async()=>{const file=await require('uxp').storage.localFileSystem.getFileForOpening({types:['json'],allowMultiple:false});if(file){setPlan(JSON.parse(await file.read()));message('Saved edit opened. Review before creating a sequence.');}});
 bind('toggle-plan',async()=>{$('plan-tools').hidden=!$('plan-tools').hidden;});

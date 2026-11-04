@@ -13,6 +13,8 @@ A practical reference for setting up and using the project, including after a lo
 
 The main goal is to prepare an event highlight **inside Adobe Premiere Pro**, then let you continue editing and export normally in Premiere.
 
+The intended direction is to control Premiere's native editing tools from your instructions, with editable clips, effects, transitions and keyframes. [Native capability audit](docs/PREMIERE_NATIVE_AUDIT.md) lists what Adobe exposes, what our plugin implements and the remaining manual steps. In the updated panel, **Native Premiere tools > Check native tools** reads the installed APIs/catalogs without changing your project. **Save tool report** saves that inventory locally; it does not prove that editing operations work.
+
 | Part | What it means | Do I need to open it? |
 | --- | --- | --- |
 | Premiere plugin | The panel where you choose footage/music, review moments, type supported instructions and request a new sequence | Yes, for the Premiere workflow |
