@@ -43,12 +43,20 @@ jobs:
             dist/download/*
           if-no-files-found: error
           retention-days: 30
+      - name: Collect build diagnostics on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          $diagnostics = 'dist/diagnostics'
+          New-Item -ItemType Directory -Force -Path $diagnostics | Out-Null
+          $warningFile = 'build/AIEventEngine/warn-AIEventEngine.txt'
+          $engineLog = Join-Path $env:LOCALAPPDATA 'AIEventEditor/engine.log'
+          if (Test-Path $warningFile) { Copy-Item $warningFile $diagnostics }
+          if (Test-Path $engineLog) { Copy-Item $engineLog $diagnostics }
       - name: Upload build diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: Windows-installer-diagnostics
-          path: |
-            build/AIEventEngine/warn-AIEventEngine.txt
-            ~/AppData/Local/AIEventEditor/engine.log
+          path: dist/diagnostics/*
           if-no-files-found: ignore

@@ -55,7 +55,9 @@ def main():
             assert len(prepared['candidates'])==9
             edit=wait(call('build',{'session_id':prepared['session_id'],'setup':{'music':str(music)},'instruction':'Use these clips and this music to make a 30-second cinematic recap'}))
             assert edit['plan']['duration_frames']==750
-            assert edit['plan']['audio']['path']==str(music)
+            # Windows can resolve temp paths to a different case/long-path spelling.
+            # Compare file identity, not their textual representation.
+            assert Path(edit['plan']['audio']['path']).samefile(music)
             assert source.is_file()
         finally:process.terminate();process.wait(timeout=20)
     with zipfile.ZipFile(app/'AIEventEditor-Premiere.ccx') as package:
