@@ -1,13 +1,13 @@
 # AI Event Editor — Premiere panel
 
-Experimental Adobe UXP integration. Load this directory with Adobe UXP Developer Tool.
+The panel now runs setup, music selection, thumbnail review, Keep/Reject/Must include, supported typed instructions and local plan generation through the shared Python engine. It can then request a new editable native Premiere sequence. Editing can stay inside Premiere; opening the standalone desktop app or transferring JSON is not required.
 
-Prepare footage, music, length/style/pacing and shot decisions in the local desktop workflow (`python -m ai_event_editor.desktop`). Click **Save edit for Premiere**, then **Open reviewed edit** in the panel. No manual JSON authoring or copy/paste is needed; existing JSON validation remains available.
+Start the helper (`python -m ai_event_editor.service`), keep it running, paste its pairing code into the panel and click Connect. Its connection is loopback-only; no paid AI API or footage upload is used. Manual helper startup is still required in this development preview.
 
-After reviewing the plan, tick the confirmation and choose **Create new sequence**. This uses native subclips and timeline actions, not a flattened MP4 or XML import. Video subclips exclude source audio; the optional music subclip uses the selected excerpt. Existing sequences and source marks remain unchanged. New media items and partial sequences can remain after a failure; nothing is automatically deleted or saved.
+Load this directory with Adobe UXP Developer Tool. Native assembly and Source Monitor seek require Premiere 26.3+. Installed-host compatibility, UI rendering and Windows end-to-end operation remain unverified. Tests cover real local HTTP/FFmpeg behavior and explicit DOM/Adobe API test doubles.
 
-Native assembly requires Premiere 26.3+ (subclip API). The manifest retains the older minimum for inspect/validate functionality. Native behavior has **not** been verified in installed Premiere. Tests use documented API signatures and a mock host; they do not prove runtime compatibility. Default Premiere preset geometry is used; inspect framing, music, trim points and timeline duration before delivery.
+Typed instructions support duration, pacing, style and category selection. Unknown instructions and unsupported slow motion, effects, titles or speech requests block generation with feedback. This is an offline rules interpreter, not a general language model or arbitrary timeline-editing assistant.
 
-Speed effects and native titles are explicitly rejected rather than silently discarded. Effects intensity, interviews and direct engine communication are later work. The duration and instruction scaffold does not modify imported plans; set supported controls in the desktop workflow.
+Existing saved-plan open/save and JSON validation remain available. Existing sequences/source marks are not edited, and nothing is automatically deleted or saved. New items or partial sequences can remain after a failed apply.
 
-See [workflow details](../docs/GUIDED_WORKFLOW.md).
+See [setup, capabilities and limitations](../docs/PREMIERE_WORKFLOW.md).

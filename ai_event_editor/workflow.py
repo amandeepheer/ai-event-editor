@@ -50,13 +50,15 @@ class Setup:
         return self
 
 
-def prepare_footage(paths, cache_dir, use_ai=False, progress=None):
+def prepare_footage(paths, cache_dir, use_ai=False, progress=None, thumbnail_format="ppm"):
     """Default: honest unranked four-second windows, no model/network required.
 
     Optional CLIP uses ONLY already cached model weights. Failed files are
     reported individually; thumbnail failure never silently rejects a moment.
     """
     from .analysis_worker import analyze_media, source_fps, VisionWorker
+    if thumbnail_format not in ("ppm", "png"):
+        raise ValueError("Unsupported thumbnail format")
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
     media, errors = [], []
@@ -88,7 +90,7 @@ def prepare_footage(paths, cache_dir, use_ai=False, progress=None):
         if progress:
             progress(f'Preparing moment {index+1}/{len(observations)}')
         identifier = hashlib.sha256(f"{candidate['path']}\0{candidate['start']:.6f}\0{candidate['end']:.6f}".encode()).hexdigest()[:20]
-        thumb = cache / (identifier+'.ppm')
+        thumb = cache / (identifier+'.'+thumbnail_format)
         warning = None
         if not thumb.exists():
             try:

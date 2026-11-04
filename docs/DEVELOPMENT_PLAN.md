@@ -31,8 +31,8 @@ Build one local-first Python AI editing engine with **Adobe Premiere Pro plugin 
 ## Current verified vs unverified
 - Code exists for analysis, candidate selection, music beats, edit planning, experimental FCP7 XML, simple FFmpeg MP4 rendering, and timed titles.
 - Advanced speed effects are currently planning metadata; renderer explicitly refuses unsupported speed effects.
-- Premiere UXP panel validates plans, opens locally generated reviewed edits and includes an experimental new-sequence adapter using documented subclip/timeline actions. Contract tests use a mock Adobe host; native sequence editing has not been verified inside installed Premiere. Direct engine communication and native effects remain pending.
-- Title specifications include position presets, coordinates, opacity and animations; advanced visual controls and instruction interpreter are not implemented.
+- Premiere UXP panel validates plans, opens locally generated reviewed edits and includes an experimental new-sequence adapter using documented subclip/timeline actions. Contract tests use a mock Adobe host; native sequence editing has not been verified inside installed Premiere. Direct engine communication now uses the authenticated loopback helper; native effects remain pending.
+- Title specifications include position presets, coordinates, opacity and animations; advanced visual controls and general language understanding are not implemented. A bounded offline instruction parser now supports length, style, pacing and category selection.
 - Baseline GitHub Actions run #76 passed at commit `1fcac3a`. Subsequent changes must pass the complete suite before being reported as verified.
 - XML export is experimental and is not proof of a working Premiere plugin.
 
@@ -54,3 +54,10 @@ Build one local-first Python AI editing engine with **Adobe Premiere Pro plugin 
 - Existing CLI, legacy desktop renderer and XML export retained.
 
 Next acceptance gate: installed Windows/Premiere walkthrough using real Sony/drone footage, including multiple uses of the same source, music offsets, mixed fps, framing, failure recovery and preservation of a manually edited sequence. Effects frequency and interview/speech mixing follow this gate; they are not complete.
+
+
+## Premiere-first integration milestone
+
+The panel now performs footage/music setup, review, typed instruction feedback and plan generation through an authenticated loopback companion. The standalone UI and legacy plan handoff remain available but are no longer required for this workflow. Previews open in Premiere's Source Monitor. Current typed interpretation is limited offline parsing of duration, style, pacing and explicit category inclusion/exclusion; unsupported requests block generation.
+
+Completed code is covered by local HTTP integration tests, real FFmpeg tests and panel/native API test doubles. Installed Windows/Premiere verification, packaged installation/automatic helper startup, general instruction understanding and advanced effects remain acceptance gates. See `PREMIERE_WORKFLOW.md` for accurate startup and feature boundaries.

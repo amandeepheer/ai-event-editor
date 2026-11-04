@@ -1,6 +1,6 @@
 # Edit-plan contract, version 1
 
-The local Python engine produces this JSON format. The desktop renderer consumes it; the Premiere scaffold validates it before future native integration. JavaScript contains only contract validation, not a second AI engine. The Python and JavaScript validators run identical valid/invalid examples in CI.
+The local Python engine produces this JSON format. The desktop renderer consumes it; the Premiere panel validates it and passes supported plans to the experimental native sequence adapter. JavaScript contains only contract validation, not a second AI engine. The Python and JavaScript validators run identical valid/invalid examples in CI.
 
 ```json
 {
@@ -34,9 +34,9 @@ The local Python engine produces this JSON format. The desktop renderer consumes
 
 `python -m ai_event_editor.cli validate-plan edit-plan.json` prints a JSON preflight summary. Invalid contracts exit nonzero. A valid contract with speed suggestions exits successfully but reports `standalone_supported: false`. This check does not verify source files, FFmpeg availability, Adobe compatibility or visual quality.
 
-The desktop window uses the Python validator. Its render worker receives a snapshot of input paths and sends completion messages through a queue; all Tkinter operations remain on the UI thread. Windows visual verification is still pending.
+The desktop window uses the Python validator. Its render worker receives a snapshot of input paths and sends completion messages through a queue; all Tkinter operations remain on the UI thread. Windows visual verification is still pending. The Premiere panel can also call the same workflow through the authenticated loopback companion; see `PREMIERE_WORKFLOW.md`.
 
-Native Premiere sequence assembly now has an experimental adapter with mock-host contract tests; installed-host verification remains pending. Direct engine-to-panel communication, editable effects/titles, true speed rendering, Windows packaging and real-camera evaluation remain unfinished. XML export remains experimental; it is not an implementation of this complete contract or native effects.
+Native Premiere sequence assembly now has an experimental adapter with mock-host contract tests; installed-host verification remains pending. Editable effects/titles, true speed rendering, Windows packaging and real-camera evaluation remain unfinished. XML export remains experimental; it is not an implementation of this complete contract or native effects.
 
 
 Guided edits may include `shot_id` (stable review moment identity), `must_include`, coverage warnings, pacing, and `audio: {path, start_seconds, duration_seconds}`. The audio duration must equal the timeline duration; the path must be nonempty and the offset finite/nonnegative. The local render-file loader uses this music selection when an explicit music file is not passed. Native assembly currently supports only normal-speed plans without native-title metadata.

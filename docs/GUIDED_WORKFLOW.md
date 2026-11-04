@@ -22,7 +22,7 @@ The saved plan includes authoritative source seconds, stable review IDs (`shot_i
 
 ## Premiere handoff
 
-This milestone uses a local file handoff: **Save edit for Premiere**, then **Open reviewed edit** in the UXP panel. There is no server, cloud upload, network permission, or second AI engine in the panel. Setup and review run in the desktop app; the panel consumes the resulting plan. Its older duration/instruction scaffold does not rewrite imported plans; the instruction field is reserved and not interpreted.
+The standalone app can still use a local file handoff: **Save edit for Premiere**, then **Open reviewed edit** in the UXP panel. The panel now also has an integrated setup/review workflow connected to an authenticated loopback Python helper; see `PREMIERE_WORKFLOW.md`. This optional standalone handoff remains available. Neither route uses a cloud upload or a second AI engine. Typed instructions are interpreted only during the integrated reviewed-build workflow; opening a saved plan retains its timing.
 
 Native assembly is experimental and requires Premiere 26.3+:
 

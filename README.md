@@ -19,20 +19,24 @@ python -m ai_event_editor.desktop
 
 The existing manual plan renderer is still available through **Render an existing plan** or `python -m ai_event_editor.desktop --legacy`.
 
-## Premiere workflow (experimental)
+## Premiere-first workflow (experimental)
 
-Load `premiere-plugin/` with Adobe UXP Developer Tool. Open a Premiere project, choose **Open reviewed edit**, select the desktop-generated edit file, review it, and explicitly confirm **Create new sequence**.
+Start the local helper with `python -m ai_event_editor.service` (or `scripts/Start-Local-Engine.cmd` on Windows). Load `premiere-plugin/` with Adobe UXP Developer Tool, open a Premiere project and connect using the helper's pairing code.
 
-The native adapter uses documented Adobe APIs to import media into a new bin, create video-only source subclips and an optional audio-only music subclip, and assemble individual editable clips in a new sequence. It does not edit existing sequences, change source marks, delete items, or automatically save the project. Sequence geometry uses Premiere's default preset; review framing after import.
+Inside the panel: **Add footage → choose music/length/style → Prepare moments → review thumbnails and Keep/Reject/Must include → type supported instructions → Build reviewed edit → Create Premiere sequence**. Source and music previews open in Premiere's Source Monitor. Continue editing and export with Premiere's normal tools. There is no requirement to open the standalone editor or transfer JSON files.
 
-Native creation requires Premiere 26.3+; the earlier inspection/validation scaffold remains available on compatible older UXP hosts. The adapter is covered by API contract tests with a test double. **It has not yet been verified inside installed Premiere.** On failure, newly imported media/subclips and any partial new sequence are retained for review.
+Typed instructions currently support duration, pacing, style and explicit include/exclude category commands, for example `Make a one-minute cinematic recap with energetic pacing`. This is an offline rules interpreter, not a general language model. Unknown instructions and requests for unfinished features are shown before generation rather than silently dropped.
+
+Native assembly requires Premiere 26.3+. The adapter creates a new bin, source subclips and an editable sequence; it does not edit existing sequences, change source marks, delete items or automatically save the project. Default Premiere geometry is retained. Native creation, Source Monitor preview and UXP network behavior still need verification in installed Premiere. Automated panel/native tests use explicit test doubles; real loopback HTTP and FFmpeg tests also run.
+
+The helper requires manual startup and pairing in this development preview. A packaged installer and automatic companion startup remain pending. See [Premiere setup and supported instructions](docs/PREMIERE_WORKFLOW.md).
 
 ## Current limitations
 
 - Windows visual QA and real-camera testing are pending; automated CI runs on Linux.
 - Beat/moment analysis is heuristic. Basic mode does not rank meaningful moments; optional CLIP labels require review. Local music RMS/onset analysis varies pacing around louder passages and approximate onsets; it is not reliable BPM, musical-structure or emotion recognition.
 - Speed ramps and slow motion are planning metadata; rendering refuses them. Style choices affect pacing/coverage, not colour grading or implemented transitions.
-- Effects intensity, interview quote selection, speech ducking, editable native titles, an installer, and direct panel-to-engine communication remain later milestones.
+- Effects intensity, interview quote selection, speech ducking, editable native titles, a packaged installer, automatic companion startup and general language understanding remain later milestones.
 - Experimental XML export remains available and is not proof of native Premiere compatibility.
 
 See [workflow details](docs/GUIDED_WORKFLOW.md), [edit-plan contract](docs/EDIT_PLAN.md), and [development plan](docs/DEVELOPMENT_PLAN.md).
