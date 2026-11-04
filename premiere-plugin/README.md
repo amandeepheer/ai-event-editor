@@ -1,5 +1,7 @@
 # AI Event Editor — Premiere panel
 
+Version 0.5.1 changes the network permission from the port-qualified entry to `http://127.0.0.1`. The request client independently enforces `http://127.0.0.1:8765` on every call and rejects alternate hosts/ports and redirects. A manifest permission denial now stops automatic launching and displays an update-panel message. Reinstall the updated CCX and cold-restart Premiere; Adobe permission matching requires the user's installed-host retest.
+
 The panel now runs setup, music selection, thumbnail review, Keep/Reject/Must include, supported typed instructions and local plan generation through the shared Python engine. It can then request a new editable native Premiere sequence. Editing can stay inside Premiere; opening the standalone desktop app or transferring JSON is not required.
 
 Version 0.5 adds **Use selected project media**: select imported footage/audio or bins in the Project panel. Nested bins are traversed read-only; the local helper separates videos and audio-only music candidates. Choose music when ambiguous, type instructions and build. Build prepares footage automatically if needed; no existing timeline is required. Whole linked sources are used; source marks/subclip bounds/effects/proxy/interpretation overrides are not copied. The adapter imports fresh source references into its own bin and preserves existing items. See [Project panel workflow](../USER_GUIDE.md#use-imported-project-panel-media-version-05).

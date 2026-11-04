@@ -1,9 +1,15 @@
-AI EVENT EDITOR - AI EDITION / ADD-ON PREVIEW 0.5.0
+AI EVENT EDITOR - AI EDITION / ADD-ON PREVIEW 0.5.1
 
 This installer includes the updated basic program plus a managed Python runtime
 for optional AI packages. It can replace the earlier basic installer; no separate
 system Python or terminal commands are required. Save your work and close an
 older running engine before upgrading. It does not uninstall your footage/data.
+
+0.5.1 fixes the plugin network declaration for the reported "Manifest entry not
+found" connection error. Update the Premiere panel using step 3, close BOTH
+Premiere 2025 and 2026 completely, then reopen 2026. The helper may already be
+running; repeatedly starting it or changing pairing codes cannot fix a denied
+plugin network permission. Installed Adobe verification is still required.
 
 1. Open "AI Event Editor Setup and Status" from the Start menu.
 2. Click "Finish basic setup". This configures automatic startup and downloads

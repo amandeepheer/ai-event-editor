@@ -11,4 +11,10 @@ def test_panel_events_cover_local_setup_review_and_build():
 def test_plugin_only_declares_local_engine_network_access():
     root=Path(__file__).resolve().parents[1]
     manifest=json.loads((root/'premiere-plugin'/'manifest.json').read_text())
-    assert manifest['requiredPermissions']['network']['domains']==['http://127.0.0.1:8765']
+    # UXP matches the host declaration; the client independently fixes port 8765.
+    assert manifest['requiredPermissions']['network']['domains']==['http://127.0.0.1']
+
+
+def test_loopback_client_permission_failure_and_fixed_destination():
+    root=Path(__file__).resolve().parents[1]
+    subprocess.run(['node',str(root/'tests'/'engine_permissions.cjs')],cwd=root,check=True)

@@ -1,10 +1,11 @@
 /* Pair only with the user's loopback companion. No external AI endpoints. */
 class EngineClient {
   constructor({fetcher = (...args) => fetch(...args), delay = ms => new Promise(resolve => setTimeout(resolve,ms)), base = 'http://127.0.0.1:8765'} = {}) {
-    if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base)) throw new Error('Engine must use a loopback address');
+    if (base !== 'http://127.0.0.1:8765') throw new Error('Engine must use http://127.0.0.1:8765');
     this.base=base; this.fetcher=fetcher; this.delay=delay; this.token='';
   }
   async request(path, body) {
+    if (this.base !== 'http://127.0.0.1:8765') throw new Error('Engine must use http://127.0.0.1:8765');
     if (!this.token) throw new Error('Connect to your local engine first');
     if (!/^\/v1\/[a-z0-9/-]+$/.test(path)) throw new Error('Invalid engine endpoint');
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -15,7 +16,15 @@ class EngineClient {
       if (controller) options.signal=controller.signal;
       if (body!==undefined) options.body=JSON.stringify(body);
       const call=(async()=>{
-        const response=await this.fetcher(this.base+path,options);
+        let response;
+        try { response=await this.fetcher(this.base+path,options); }
+        catch(cause) {
+          if (/permission denied|manifest entry not found/i.test(String(cause && cause.message || cause))) {
+            const error=new Error('Premiere blocked the plugin network permission. Install the updated AI Event Editor panel (0.5.1 or newer), fully close both Premiere versions, then reopen Premiere 2026. Reinstall the panel through Setup and Status; a pairing code cannot fix this permission error.');
+            error.preventLaunch=true;throw error;
+          }
+          throw cause;
+        }
         let result;
         try{result=await response.json();}
         catch(cause){const error=new Error('The local port returned an unexpected response. Check for another service using port 8765.');error.preventLaunch=true;throw error;}

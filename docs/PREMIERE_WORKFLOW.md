@@ -37,7 +37,7 @@ Instructions regenerate a proposed edit from reviewed source moments. They do no
 
 ## Local service contract
 
-The stdlib helper binds only `127.0.0.1`. The panel declares only `http://127.0.0.1:8765` in its network permissions. Files are read on the local computer and paths/thumbnail data travel only over loopback. No external API, paid service, model download or media upload is used by this connection.
+The stdlib helper binds only `127.0.0.1`. The panel declares the host `http://127.0.0.1` without a port in its network permission; the client fixes every request to `http://127.0.0.1:8765`, rejects alternate hosts/ports and disallows redirects. Files are read on the local computer and paths/thumbnail data travel only over loopback. No external API, paid service, model download or media upload is used by this connection.
 
 Every endpoint requires the pairing token in an Authorization header. Tokens are never sent in URLs or request logs. The helper also validates the Host header and restricts browser origins, provides no arbitrary file-serving endpoint and rejects unknown/duplicate shot IDs or attempts to replace source paths/ranges through review patches. Thumbnail PNGs are returned as data URLs in authenticated job results. The local pairing token is stored in the current user's application data and displayed by the helper; keep it private. The panel persists only the UXP access token for the user-selected configuration file, not a plaintext pairing secret. Each reconnect rereads that approved file. Manual pairing remains memory-only.
 

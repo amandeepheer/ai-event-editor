@@ -5,11 +5,15 @@ A practical reference for setting up and using the project, including after a lo
 **Project:** [amandeepheer/ai-event-editor](https://github.com/amandeepheer/ai-event-editor)  
 **Use this branch:** `main`  
 **Guide updated:** 4 November 2026  
-**Current release in the repository:** development preview, version 0.5.0
+**Current release in the repository:** development preview, version 0.5.1
 
 > The automated tests passed, but this preview has not yet been verified inside installed Windows/Premiere Pro. A basic installer preview is available through a successful Windows build; it is not a verified production release. Test with a small copy of an event project before using it for a client delivery.
 
 ## 1. What this project does
+
+### Connection permission fix in 0.5.1
+
+If the panel says **Permission denied ... Manifest entry not found**, Premiere is blocking the plugin's network declaration. Version 0.5.1 declares the loopback host without a port and still restricts every client request to `127.0.0.1:8765`. Install/update the Premiere panel from the new package, fully close Premiere 2025 and 2026, and reopen 2026. Pairing again or repeatedly starting the helper cannot repair a manifest permission denial. This compatibility change needs verification on the installed Premiere host; unit/Windows engine checks do not execute Adobe's permission matcher.
 
 The main goal is to prepare an event highlight **inside Adobe Premiere Pro**, then let you continue editing and export normally in Premiere.
 
