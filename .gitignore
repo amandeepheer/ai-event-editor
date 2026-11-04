@@ -12,3 +12,8 @@ outputs/
 *.mxf
 *.wav
 *.mp3
+
+# Generated Windows packages
+build/
+dist/
+*.spec

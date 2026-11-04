@@ -35,9 +35,13 @@ function setup(){
 }
 function review(){return state.candidates.map(c=>({id:c.id,decision:c.decision,category:c.category}));}
 function payload(){if(!state.session)throw new Error('Prepare your footage before building an edit.');return {session_id:state.session,setup:setup(),review:review(),instruction:$('instruction').value};}
+function applyCapabilities(){
+  if(client.health && client.health.vision_available===false){$('use-ai').checked=false;$('use-ai').disabled=true;$('analysis-hint').textContent='Basic review mode: GPU AI packages/models are not installed in this runtime.';}
+}
 function lock(value){
   state.busy=value;
   for(const el of document.querySelectorAll('button,input,select,textarea'))el.disabled=value;
+  if(!value)applyCapabilities();
 }
 async function perform(work){
   if(state.busy)return;

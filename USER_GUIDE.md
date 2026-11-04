@@ -5,9 +5,9 @@ A practical reference for setting up and using the project, including after a lo
 **Project:** [amandeepheer/ai-event-editor](https://github.com/amandeepheer/ai-event-editor)  
 **Use this branch:** `main`  
 **Guide updated:** 4 November 2026  
-**Current release in the repository:** development preview, version 0.2.1
+**Current release in the repository:** development preview, version 0.3.0
 
-> The automated tests passed, but this preview has not yet been verified inside installed Windows/Premiere Pro. It is not a finished installer release. Test with a small copy of an event project before using it for a client delivery.
+> The automated tests passed, but this preview has not yet been verified inside installed Windows/Premiere Pro. A basic installer preview is available through a successful Windows build; it is not a verified production release. Test with a small copy of an event project before using it for a client delivery.
 
 ## 1. What this project does
 
@@ -21,6 +21,19 @@ The main goal is to prepare an event highlight **inside Adobe Premiere Pro**, th
 
 The helper connection does not upload your footage or use a paid cloud AI service. Optional AI category suggestions need installed packages and already cached model weights. Installing software/packages can require internet access; processing your event is local.
 
+## Windows installer route — no Python commands
+
+Use the latest successful [Windows installer build](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml). Download **AI-Event-Editor-Windows-Installer**, extract the ZIP and run the Setup `.exe` inside. GitHub may require you to sign in to download Actions artifacts.
+
+1. Run Setup and open **AI Event Editor Setup and Status**.
+2. Click **Finish setup**. It downloads media tools once if needed (approximately 81 MB; internet required), verifies the archive and prepares automatic startup.
+3. Click **Install Premiere panel**. Adobe Creative Cloud Desktop installs the included `.ccx` after its confirmation prompts.
+4. Open Premiere 26.3+, then **Window > UXP Plugins > AI Event Editor**. Enable plugin Developer Mode if Adobe requires it for this preview.
+5. In the panel click **Set up automatic start**. Select `engine-connection.json` from the setup window's **Open connection-file folder** location. Keep that private file.
+6. Continue with the everyday editing section below. You do not need the source-development/Python steps that follow.
+
+The installer bundles the basic engine and Python, not GPU AI packages/models, Ollama, Premiere itself or a standalone MP4 editor. Adobe installation/permissions and real Premiere behavior still need verification on your PC. Source-development setup remains documented below for developers and for the optional standalone editor.
+
 ## 2. First-time Windows setup
 
 You need:
@@ -31,7 +44,7 @@ You need:
 - Adobe UXP Developer Tool to load this development plugin.
 - The latest project from the repository's **main** branch.
 
-There is no all-in-one installer yet. These steps configure the development version.
+These terminal-based steps are the source-development route. If you use the basic Windows installer above, skip them.
 
 ### A. Keep the project in a permanent folder
 
@@ -215,7 +228,7 @@ Record the exact panel/helper error, Premiere version, action that triggered it,
 | Implemented; still requires installed Windows/Premiere verification | Actual helper launch/permissions, panel rendering, Source Monitor preview and native editable-sequence creation |
 | Available separately | Standalone desktop workflow, normal-speed MP4 rendering, CLI tools and experimental XML export |
 | Not implemented for the plugin workflow | Actual slow motion/speed ramps, effect-intensity controls, native titles/captions, interview/speech editing and music ducking |
-| Still pending | Packaged installer, general natural-language understanding, full review-session recovery and real-camera visual/performance evaluation |
+| Still pending | GPU-model packaging, general natural-language understanding, full review-session recovery and real-camera visual/performance evaluation |
 
 **Verified baseline:** GitHub Actions [run #80](https://github.com/amandeepheer/ai-event-editor/actions/runs/41747250384) passed **249 tests** on code commit `6acccd2`. This is a dated reference, not a claim about all future revisions. Check the [latest Actions runs](https://github.com/amandeepheer/ai-event-editor/actions) after later updates. Automated tests do not prove installed Premiere behaviour.
 

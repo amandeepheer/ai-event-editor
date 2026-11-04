@@ -1,0 +1,51 @@
+name: Windows installer
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ai_event_editor/**'
+      - 'premiere-plugin/**'
+      - 'packaging/windows/**'
+      - '.github/workflows/windows-installer.yml'
+      - 'pyproject.toml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build tools
+        run: python -m pip install -e . "pyinstaller>=6.10,<7"
+      - name: Build engine, Adobe package and installer
+        run: python packaging/windows/package.py
+      - name: Install and exercise the packaged engine
+        shell: pwsh
+        run: |
+          $installer = (Get-ChildItem dist/installer/*.exe | Select-Object -First 1).FullName
+          $installedApp = Join-Path $env:RUNNER_TEMP 'AI Event Editor Installed'
+          $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/DIR=`"$installedApp`"") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Installer failed: $($process.ExitCode)" }
+          python packaging/windows/smoke_test.py "$installedApp"
+      - name: Publish downloadable installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Event-Editor-Windows-Installer
+          path: |
+            dist/download/*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload build diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-installer-diagnostics
+          path: |
+            build/AIEventEngine/warn-AIEventEngine.txt
+            ~/AppData/Local/AIEventEditor/engine.log
+          if-no-files-found: ignore

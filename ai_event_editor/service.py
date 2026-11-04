@@ -34,11 +34,13 @@ class Engine:
         self.cache.cleanup()
 
     def health(self):
+        from importlib.util import find_spec
+        vision=all(find_spec(name) is not None for name in ('torch','transformers','PIL'))
         return {'api_version': API_VERSION, 'engine': 'AI Event Editor',
                 'ffmpeg': bool(shutil.which('ffmpeg')), 'ffprobe': bool(shutil.which('ffprobe')),
                 'busy': self.active is not None,
                 'instructions': ['duration','pacing','style','include category','exclude category'],
-                'native_host_verified': False}
+                'native_host_verified': False, 'vision_available': vision}
 
     def submit(self, task):
         with self.lock:
@@ -216,14 +218,17 @@ def configure_plugin(base=None, executable=None, working_directory=None):
     """Create a per-user Windows launcher and pairing file; no registry/admin edits."""
     import sys
     base = Path(base) if base is not None else Path(os.environ.get('LOCALAPPDATA',Path.home()/'.local'/'share'))/'AIEventEditor'
-    if executable is None:
+    frozen = bool(getattr(sys,'frozen',False))
+    if executable is None and frozen:
+        executable=str(sys.executable)
+    elif executable is None:
         background_python=Path(sys.executable).with_name('pythonw.exe')
         if not background_python.is_file():
             raise ValueError('Python for Windows must include pythonw.exe for background startup')
         executable=str(background_python)
     else:
         executable=str(executable)
-    working_directory = str(working_directory or Path(__file__).resolve().parents[1])
+    working_directory = str(working_directory or (Path(sys.executable).parent if frozen else Path(__file__).resolve().parents[1]))
     if any(c in executable+working_directory for c in ('%', '"', '\r', '\n')):
         raise ValueError('Move Python/project to a path without percent signs, quotes or line breaks before configuring the launcher')
     base.mkdir(parents=True,exist_ok=True)
@@ -231,7 +236,7 @@ def configure_plugin(base=None, executable=None, working_directory=None):
     launcher = base/'Start-AI-Event-Engine.cmd'
     script = ('@echo off\r\nchcp 65001 >nul\r\nsetlocal DisableDelayedExpansion\r\n'
               'cd /d "'+working_directory+'" || exit /b 1\r\n'
-              'start "" /b "'+executable+'" -m ai_event_editor.service --background\r\n')
+              'start "" /b "'+executable+'" '+('--background' if frozen else '-m ai_event_editor.service --background')+'\r\n')
     launcher.write_text(script,encoding='utf-8',newline='')
     connection=base/'engine-connection.json'
     descriptor=os.open(connection,os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600)

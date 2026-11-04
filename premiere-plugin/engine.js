@@ -32,6 +32,7 @@ class EngineClient {
     const health=await this.request('/v1/health');
     if(health.api_version!==1 || health.engine!=='AI Event Editor') {const error=new Error('Incompatible local engine. Update the plugin and helper together.');error.preventLaunch=true;throw error;}
     if(!health.ffmpeg || !health.ffprobe) {const error=new Error('Install FFmpeg and FFprobe on the helper PATH, then reconnect.');error.preventLaunch=true;throw error;}
+    this.health=health;
     return health;
   }
   async operation(path,body,progress=()=>{}) {
