@@ -11,3 +11,5 @@ Typed instructions support duration, pacing, style and category selection. Unkno
 Existing saved-plan open/save and JSON validation remain available. Existing sequences/source marks are not edited, and nothing is automatically deleted or saved. New items or partial sequences can remain after a failed apply.
 
 See [setup, capabilities and limitations](../docs/PREMIERE_WORKFLOW.md).
+
+The AI Edition adds optional managed CLIP package/model setup and local Ollama/Qwen interpretation. Enable the language checkbox only after installing Ollama/Qwen. Unknown phrasing uses a validated schema; unsupported editing features remain blocked. See `../docs/AI_ADDON.md`.

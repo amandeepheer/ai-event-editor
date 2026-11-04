@@ -35,7 +35,8 @@ class Engine:
 
     def health(self):
         from importlib.util import find_spec
-        vision=all(find_spec(name) is not None for name in ('torch','transformers','PIL'))
+        from .ai_runtime import ready
+        vision=ready() or all(find_spec(name) is not None for name in ('torch','transformers','PIL'))
         return {'api_version': API_VERSION, 'engine': 'AI Event Editor',
                 'ffmpeg': bool(shutil.which('ffmpeg')), 'ffprobe': bool(shutil.which('ffprobe')),
                 'busy': self.active is not None,
@@ -117,17 +118,35 @@ class Engine:
         reviewed_shots(candidates)
         if not isinstance(data.get('setup',{}),dict): raise ValueError('Invalid setup')
         setup=Setup(**data.get('setup',{}))
-        result=interpret(data.get('instruction',''),setup,candidates)
+        mode=data.get('instruction_mode','rules')
+        if mode not in ('rules','ollama'):raise ValueError('Invalid instruction mode')
+        if mode=='ollama':
+            from .local_language import interpret_local
+            result=interpret_local(data.get('instruction',''),setup,candidates)
+        else:result=interpret(data.get('instruction',''),setup,candidates)
         return result
 
-    def build(self,data):
-        parsed=self.request(data)
-        if parsed['unsupported']: raise ValueError('; '.join(parsed['unsupported']))
+    def interpret_job(self,data):
         def task(progress):
+            progress('Interpreting locally with Ollama/Qwen; first loading can take a while…')
+            parsed=self.request(data)
+            return {**parsed,'candidates':[{k:c[k] for k in ('id','decision','category')} for c in parsed['candidates']]}
+        return self.submit(task)
+
+    def build(self,data):
+        def finish(parsed,progress):
+            if parsed['unsupported']:raise ValueError('; '.join(parsed['unsupported']))
             progress('Analyzing selected music and building the reviewed edit locally…')
             plan=create_edit(parsed['candidates'],Setup(**parsed['setup']))
             return {'plan':plan,'instructions':{k:v for k,v in parsed.items() if k not in ('candidates',)}}
-        return self.submit(task)
+        if data.get('instruction_mode','rules')=='ollama':
+            def task(progress):
+                progress('Interpreting the request locally with Ollama/Qwen…')
+                return finish(self.request(data),progress)
+            return self.submit(task)
+        parsed=self.request(data)
+        if parsed['unsupported']:raise ValueError('; '.join(parsed['unsupported']))
+        return self.submit(lambda progress:finish(parsed,progress))
 
 
 def handler(engine):
@@ -184,6 +203,7 @@ def handler(engine):
                 data=json.loads(self.rfile.read(size),parse_constant=lambda x:(_ for _ in ()).throw(ValueError('Nonfinite JSON number')))
                 if not isinstance(data,dict): raise ValueError('Request must be an object')
                 if self.path=='/v1/prepare': result=engine.prepare(data)
+                elif self.path=='/v1/interpret-local': result=engine.interpret_job(data)
                 elif self.path=='/v1/interpret':
                     parsed=engine.request(data)
                     result={**parsed,'candidates':[{k:c[k] for k in ('id','decision','category')} for c in parsed['candidates']]}

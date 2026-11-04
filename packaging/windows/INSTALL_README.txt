@@ -1,47 +1,65 @@
-AI EVENT EDITOR - WINDOWS DEVELOPMENT PREVIEW
+AI EVENT EDITOR - AI EDITION / ADD-ON PREVIEW 0.4.0
+
+This installer includes the updated basic program plus a managed Python runtime
+for optional AI packages. It can replace the earlier basic installer; no separate
+system Python or terminal commands are required. Save your work and close an
+older running engine before upgrading. It does not uninstall your footage/data.
 
 1. Open "AI Event Editor Setup and Status" from the Start menu.
-2. Click "Finish setup". The Python engine is included. On first setup it
-   downloads approximately 81 MB of FFmpeg/FFprobe media tools directly from
-   the upstream publisher, verifies their checksum and configures startup.
-   Internet is required for this initial download. There is no subscription.
-3. Click "Install Premiere panel". Adobe Creative Cloud Desktop opens the
-   included .ccx package. Accept Adobe's installation/permission prompts.
-4. Open Premiere 26.3 or newer, then Window > UXP Plugins > AI Event Editor.
-   Enable Premiere's plugin Developer Mode if Adobe requires it for this preview.
-5. Click "Set up automatic start" and select engine-connection.json in:
-   %LOCALAPPDATA%\AIEventEditor
-   Use the setup window's "Open connection-file folder" button to locate it.
-   Keep this private file: it contains your local pairing credential.
-6. Next time the panel opens it reconnects or launches the engine automatically.
+2. Click "Finish basic setup". This configures automatic startup and downloads
+   approximately 81 MB of media tools if needed.
+3. Click "Install Premiere panel" and approve Adobe Creative Cloud's CCX prompts.
+4. In Premiere 26.3+, open Window > UXP Plugins > AI Event Editor. Enable plugin
+   Developer Mode if Adobe requires it for this preview. Select "Set up automatic
+   start", then engine-connection.json from %LOCALAPPDATA%\AIEventEditor.
 
-Editing: Add footage, choose optional music and length/style/pacing, prepare
-moments, review Keep/Reject/Must include, type supported instructions, build
-and confirm creation of a new sequence. Finish and export normally in Premiere.
-Example instruction: Make a one-minute cinematic recap with energetic pacing.
+OPTIONAL AI FOOTAGE SUGGESTIONS
 
-Included: basic local planning engine, setup/status app and Premiere .ccx package.
-Not included: Premiere/Creative Cloud, CLIP GPU packages/weights, Ollama or a
-standalone MP4-rendering application. Advanced natural-language AI, slow motion,
-effects, titles and speech editing remain unfinished. Default analysis creates
-unranked moments; it does not identify the best emotional moment automatically.
+5. In Setup and Status choose CPU or NVIDIA mode and click "Install / repair
+   CLIP AI". CPU downloads hundreds of MB of packages plus the model; NVIDIA
+   CUDA packages can be several GB. NVIDIA mode needs a compatible driver.
+   The model is downloaded once, then real inference is tested before readiness.
+6. After success, reconnect/reopen the Premiere panel. Enable cached local AI
+   and prepare footage. Categories are suggestions and still require review.
+   The worker releases its model/GPU memory when the analysis operation ends.
+   If GPU setup fails, check your driver or choose the smaller/slower CPU option.
 
-This is an unsigned development-preview installer. Windows and Adobe may display
-publisher/permission prompts. Installed Premiere compatibility and real footage
-still need verification. A successful installer smoke test is not proof of a
-working native Premiere workflow. Existing client sequences are not overwritten;
-review new timelines before delivery.
+OPTIONAL LOCAL LANGUAGE UNDERSTANDING
 
-Moving/uninstalling the app can invalidate automatic startup. Uninstall removes
-installed program files, not original footage, Premiere projects or per-user
-pairing/media-tool data under %LOCALAPPDATA%\AIEventEditor. Review/save your work
-and close a running engine before updating. This installer does not silently
-terminate a processing engine or delete event data.
+7. Click "Install Ollama" (about 1.7 GB). Complete the vendor's installer window.
+   If Ollama is already installed, skip this button.
+8. Click "Download Qwen3 8B language model" (about 5.2 GB). This uses Ollama's
+   local service. Downloads are optional and require internet and free disk space.
+9. Enable "Use local Ollama/Qwen" in the Premiere panel for broader phrasing.
+   Existing simple instructions still use deterministic rules. Local model output
+   is restricted to supported settings and must be reviewed. No cloud-model or
+   paid API fallback is used. Requests for unfinished effects remain blocked.
 
-Downloaded media tools: BtbN FFmpeg LGPL shared Windows build (8.1 branch).
-https://github.com/BtbN/FFmpeg-Builds
-The downloaded archive retains its publisher's licence/notices. Binaries are
-retrieved directly during setup, not embedded in this installer.
+Basic workflow: add footage/music, choose length/style/pacing, prepare and review
+moments, type optional instructions, build, then confirm a NEW Premiere sequence.
+Finish and export normally in Premiere. Save your Premiere project normally.
 
-Project/user guide:
+Not implemented: actual slow motion/speed ramps, visual effects, native titles,
+interview/speech edits, arbitrary AI changes to an existing Premiere timeline.
+Downloading a model does not create those missing editing functions.
+
+The program, installers and downloads are development previews. Automated CPU
+inference can be verified in CI; RTX 5070 operation, real Qwen performance and
+native installed Premiere behavior still need checks on the user's computer.
+The installer is unsigned; normal Windows/Adobe permission prompts may appear.
+
+Uninstall removes installed program files, not original footage/Premiere projects
+or per-user pairing, media-tool and model-cache data under AppData. Models and
+packages occupy disk space and are not automatically removed by upgrades.
+Keep engine-connection.json private; it contains the local pairing credential.
+
+Downloaded software/models:
+FFmpeg: https://github.com/BtbN/FFmpeg-Builds
+Torch: https://pytorch.org/get-started/previous-versions/
+CLIP: https://huggingface.co/openai/clip-vit-base-patch32
+Ollama: https://github.com/ollama/ollama
+Qwen: https://ollama.com/library/qwen3:8b
+Their respective notices and licences apply; downloads run directly on your PC.
+
+Project guide:
 https://github.com/amandeepheer/ai-event-editor/blob/main/USER_GUIDE.md

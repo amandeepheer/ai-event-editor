@@ -34,9 +34,9 @@ function setup(){
   return {duration:selectedDuration(),style:$('style').value,pacing:$('pacing').value,music:state.music,audio_start:start,audio_end:end};
 }
 function review(){return state.candidates.map(c=>({id:c.id,decision:c.decision,category:c.category}));}
-function payload(){if(!state.session)throw new Error('Prepare your footage before building an edit.');return {session_id:state.session,setup:setup(),review:review(),instruction:$('instruction').value};}
+function payload(){if(!state.session)throw new Error('Prepare your footage before building an edit.');return {session_id:state.session,setup:setup(),review:review(),instruction:$('instruction').value,instruction_mode:$('use-language-model').checked?'ollama':'rules'};}
 function applyCapabilities(){
-  if(client.health && client.health.vision_available===false){$('use-ai').checked=false;$('use-ai').disabled=true;$('analysis-hint').textContent='Basic review mode: GPU AI packages/models are not installed in this runtime.';}
+  if(client.health && client.health.vision_available===false){$('use-ai').checked=false;$('use-ai').disabled=true;$('analysis-hint').textContent='AI packages/model are not ready. Use Install CLIP in Setup and Status, then reconnect.';}
 }
 function lock(value){
   state.busy=value;
@@ -98,7 +98,7 @@ async function previewSource(path,start,end){
   message('Source Monitor opened at '+start.toFixed(2)+'s. Review until '+end.toFixed(2)+'s using Premiere playback controls.');
 }
 for(const id of ['audio-start','audio-end','custom-seconds','instruction'])$(id).addEventListener('input',invalidate);
-for(const id of ['duration-preset','style','pacing','use-ai'])$(id).addEventListener('change',()=>{if(id==='use-ai')state.session=null;invalidate();updateDuration();});
+for(const id of ['duration-preset','style','pacing','use-ai','use-language-model'])$(id).addEventListener('change',()=>{if(id==='use-ai')state.session=null;invalidate();updateDuration();});
 $('custom-seconds').addEventListener('input',updateDuration);updateDuration();
 bind('configure-autostart',async()=>{
   const file=await uxp.storage.localFileSystem.getFileForOpening({types:['json'],allowMultiple:false});
@@ -142,7 +142,7 @@ bind('prepare',async()=>{
 });
 bind('previous',async()=>{state.page=Math.max(0,state.page-1);drawShots();});
 bind('next',async()=>{state.page++;drawShots();});
-bind('interpret',async()=>{const result=await client.request('/v1/interpret',payload());adopt(result);message(result.unsupported.length?'Revise unsupported instructions before building.':'Instruction changes are shown above. Build when your review is ready.');});
+bind('interpret',async()=>{const body=payload();const result=body.instruction_mode==='ollama'?await client.operation('/v1/interpret-local',body,message):await client.request('/v1/interpret',body);adopt(result);message(result.unsupported.length?'Revise unsupported instructions before building.':'Instruction changes are shown above. Build when your review is ready.');});
 bind('build',async()=>{
   invalidate();const result=await client.operation('/v1/build',payload(),message);
   setPlan(result.plan);$('instruction-result').textContent=result.instructions.applied.join('\n')||'Using your reviewed setup.';

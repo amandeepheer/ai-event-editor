@@ -66,3 +66,8 @@ Completed code is covered by local HTTP integration tests, real FFmpeg tests and
 ## Automatic companion startup
 
 One-time per-user Windows configuration generates a background launcher and private connection file. The panel remembers a user-approved UXP file token, reconnects on opening, and launches the fixed helper only when no running service responds. Adobe launch consent is handled normally and can be remembered. Duplicate launch prevention, timeout, denial, expired file access and invalid pairing are covered by tests. A packaged installer, installed Windows/Adobe verification and automatic review-state recovery remain pending.
+
+
+## AI Edition / add-on milestone
+
+A managed Windows Python runtime is bundled with the updated installer. Setup buttons install/verify CPU or NVIDIA Torch and CLIP without user commands. Optional pinned Ollama installation/model pulling and constrained local-language interpretation are connected to the panel. Model output only maps to implemented settings. Known unsupported requests remain blocked. Windows CI verifies real CPU inference and cached AI footage preparation; NVIDIA/real Qwen performance and installed Premiere remain user-machine verification. No speed effects, titles or speech editing are implied by these downloads.

@@ -11,14 +11,15 @@ from .frame_sampling import extract_frame
 from .vision import PROMPTS
 
 class VisionWorker:
-    def __init__(self, model_name: str = "openai/clip-vit-base-patch32", local_files_only: bool = False):
+    def __init__(self, model_name: str = "openai/clip-vit-base-patch32", local_files_only: bool = False, device: str | None = None):
         try:
             import torch
             from transformers import CLIPModel, CLIPProcessor
         except ImportError as exc:
             raise RuntimeError('Install vision dependencies: pip install ".[vision]"') from exc
         self.torch = torch
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        if self.device not in ("cpu","cuda"):raise ValueError("Invalid processing device")
         self.model = CLIPModel.from_pretrained(model_name, local_files_only=local_files_only).to(self.device).eval()
         self.processor = CLIPProcessor.from_pretrained(model_name, local_files_only=local_files_only)
         self.labels = list(PROMPTS)
@@ -28,6 +29,8 @@ class VisionWorker:
         from PIL import Image
         if not paths:
             return []
+        if len(paths)>8:
+            return [result for offset in range(0,len(paths),8) for result in self.classify(paths[offset:offset+8])]
         with self.torch.inference_mode():
             images = []
             for path in paths:

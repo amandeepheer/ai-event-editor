@@ -4,13 +4,13 @@ Local-first event highlight editing with one shared Python engine, a Windows-fri
 
 **Start here:** [Plain-language user guide](USER_GUIDE.md) — first-time setup, automatic startup, everyday editing, supported instructions, saving work and troubleshooting.
 
-## Windows installer preview
+## Windows AI Edition installer preview
 
-The [Windows installer workflow](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml) builds a downloadable ZIP containing **AI-Event-Editor-Setup-0.3.0-Windows-x64.exe**. Download its **AI-Event-Editor-Windows-Installer** artifact after a successful build, extract it and run Setup. Build artifacts expire after 30 days; use the newest passing build.
+The [Windows installer workflow](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml) builds **AI-Event-Editor-AI-Setup-0.4.0-Windows-x64.exe**, available in its successful **AI-Event-Editor-AI-Installer** artifact. Extract the download and run Setup. No system Python or terminal commands are needed. Artifacts expire after 30 days; use the latest passing build.
 
-The installer includes Python in the engine and an Adobe `.ccx` panel package. No Python/terminal setup is needed for this basic installed workflow. First setup downloads approximately 81 MB of verified FFmpeg/FFprobe tools directly from the publisher. Open **AI Event Editor Setup and Status** from Start, click **Finish setup**, then **Install Premiere panel** and accept Adobe's prompts. In the panel choose **Set up automatic start** and select the generated connection file.
+The updated installer includes the basic engine, setup/status app, Adobe CCX panel and an isolated Python runtime for optional AI. Finish basic setup, install the Adobe panel, then optionally install CLIP (CPU or NVIDIA) through Setup and Status. Optional Ollama and Qwen download buttons enable broader local interpretation when selected in the panel. Downloads can be several GB; they are explicit setup operations and are not silently performed when the panel opens.
 
-This basic installer does not include GPU AI packages/weights, Ollama or the standalone MP4 editor. Existing source/standalone workflows remain available below. Native Adobe package installation and real Premiere operation still need user-machine verification. See [installer details](docs/WINDOWS_INSTALLER.md).
+No advanced editing capability is implied by a model download. Effects, speed remapping, titles and speech editing remain unfinished. NVIDIA hardware, actual Ollama/Qwen and native Premiere must still be verified on the user's computer. See [AI add-on details](docs/AI_ADDON.md) and [installer details](docs/WINDOWS_INSTALLER.md). Existing source and standalone workflows remain below.
 
 ## Guided desktop workflow
 
@@ -35,7 +35,7 @@ On Windows, run `scripts/Configure-Premiere-Autostart.cmd` once. Load `premiere-
 
 Inside the panel: **Add footage → choose music/length/style → Prepare moments → review thumbnails and Keep/Reject/Must include → type supported instructions → Build reviewed edit → Create Premiere sequence**. Source and music previews open in Premiere's Source Monitor. Continue editing and export with Premiere's normal tools. There is no requirement to open the standalone editor or transfer JSON files.
 
-Typed instructions currently support duration, pacing, style and explicit include/exclude category commands, for example `Make a one-minute cinematic recap with energetic pacing`. This is an offline rules interpreter, not a general language model. Unknown instructions and requests for unfinished features are shown before generation rather than silently dropped.
+Typed instructions currently support duration, pacing, style and explicit include/exclude category commands, for example `Make a one-minute cinematic recap with energetic pacing`. The default is an offline rules interpreter. Optional local Ollama/Qwen can translate broader phrasing into the same bounded settings, with validation and human review. Unknown instructions and requests for unfinished features are shown before generation rather than silently dropped.
 
 Native assembly requires Premiere 26.3+. The adapter creates a new bin, source subclips and an editable sequence; it does not edit existing sequences, change source marks, delete items or automatically save the project. Default Premiere geometry is retained. Native creation, Source Monitor preview and UXP network behavior still need verification in installed Premiere. Automated panel/native tests use explicit test doubles; real loopback HTTP and FFmpeg tests also run.
 
@@ -46,7 +46,7 @@ Automatic startup requires the one-time Windows configuration above and Python w
 - Windows visual QA and real-camera testing are pending; automated CI runs on Linux.
 - Beat/moment analysis is heuristic. Basic mode does not rank meaningful moments; optional CLIP labels require review. Local music RMS/onset analysis varies pacing around louder passages and approximate onsets; it is not reliable BPM, musical-structure or emotion recognition.
 - Speed ramps and slow motion are planning metadata; rendering refuses them. Style choices affect pacing/coverage, not colour grading or implemented transitions.
-- Effects intensity, interview quote selection, speech ducking, editable native titles, GPU-model packaging and general language understanding remain later milestones.
+- Effects intensity, interview quote selection, speech ducking, editable native titles, NVIDIA performance verification and broader editing capabilities remain later milestones.
 - Experimental XML export remains available and is not proof of native Premiere compatibility.
 
 See [workflow details](docs/GUIDED_WORKFLOW.md), [edit-plan contract](docs/EDIT_PLAN.md), and [development plan](docs/DEVELOPMENT_PLAN.md).

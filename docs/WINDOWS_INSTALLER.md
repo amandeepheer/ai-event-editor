@@ -1,10 +1,10 @@
-# Basic Windows installer preview
+# Windows AI Edition installer preview
 
 The Windows installer job builds a real x64 Setup executable with PyInstaller (bundled Python helper), Inno Setup (per-user installation) and an independent Adobe CCX ZIP package. Existing source, manual pairing and standalone-editor workflows are retained.
 
 ## User installation
 
-Download **AI-Event-Editor-Windows-Installer** from a successful [Windows installer workflow run](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml). Extract the artifact ZIP, run Setup, then use **AI Event Editor Setup and Status** from Start:
+Download **AI-Event-Editor-AI-Installer** from a successful [Windows installer workflow run](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml). Extract the artifact ZIP, run Setup, then use **AI Event Editor Setup and Status** from Start:
 
 1. Finish setup: media tools are downloaded directly from the publisher if necessary, checked against a pinned SHA-256, and configured in the user's application data. Python is already bundled; no pip commands are needed.
 2. Install Premiere panel: opens the included `.ccx` through Creative Cloud Desktop, which handles Adobe's confirmation dialogs. The archive has manifest.json at its root.
@@ -16,7 +16,7 @@ The helper can start automatically from the panel after pairing. Initial media d
 
 Included: bundled Python engine, setup/status window, Adobe CCX, guides and basic unranked footage review/planning. Existing system FFmpeg/FFprobe can be reused; otherwise the media archive is obtained directly at setup time. Downloaded publisher notices/licenses are retained. The installer does not redistribute that FFmpeg archive.
 
-Not included: Premiere/Creative Cloud, CLIP/Torch GPU packages or model weights, Ollama, advanced language understanding or the standalone MP4 editor. GPU suggestions are disabled when the packaged engine reports those packages absent. This changes installed-runtime capability reporting, not the existing source feature. The LGPL media build is sufficient for the Premiere engine's decoding, thumbnails and music analysis; the separate source standalone renderer still has its existing libx264 requirement.
+Optional AI setup is now available in the AI Edition: an isolated Python runtime is included, while Torch/CLIP, Ollama and Qwen download only when the user chooses their setup buttons. Premiere/Creative Cloud and the standalone MP4 editor are not included. See `AI_ADDON.md`. GPU suggestions are disabled when the packaged engine reports those packages absent. This changes installed-runtime capability reporting, not the existing source feature. The LGPL media build is sufficient for the Premiere engine's decoding, thumbnails and music analysis; the separate source standalone renderer still has its existing libx264 requirement.
 
 This is an unsigned development build. No code-signing certificate or paid installer service is used. Windows/Adobe may show publisher or installation prompts. A basic installer/HTTP smoke test does not establish actual Creative Cloud acceptance or native Premiere compatibility.
 
@@ -39,3 +39,5 @@ Close/save your work and stop an older helper before updating. Installed files a
 - Adobe CCX packaging: https://developer.adobe.com/premiere-pro/uxp/plugins/distribution/package/
 - Adobe installation: https://developer.adobe.com/premiere-pro/uxp/plugins/distribution/install/
 - Media publisher: https://github.com/BtbN/FFmpeg-Builds
+
+The AI Edition adds a second Windows smoke test that installs real CPU packages/CLIP in the managed interpreter and checks local inference plus AI footage preparation. NVIDIA GPU and real Ollama/Qwen are not downloaded/tested on this runner.

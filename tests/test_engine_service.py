@@ -188,3 +188,18 @@ def test_real_footage_to_reviewed_plan_through_http(tmp_path):
         assert patches[0]['id'] not in {s['shot_id'] for s in plan['segments']}
         assert patches[1]['id'] in {s['shot_id'] for s in plan['segments']}
     assert hashlib.sha256(source.read_bytes()).hexdigest()==digest
+
+
+def test_optional_local_interpretation_runs_as_polled_job(monkeypatch):
+    from ai_event_editor.instructions import interpret
+    monkeypatch.setattr('ai_event_editor.local_language.interpret_local',lambda text,setup,shots:interpret('30 seconds calm',setup,shots))
+    with running() as (engine,port):
+        body=seed(engine);body['instruction']='a relaxed feeling';body['instruction_mode']='ollama'
+        code,result,_=request(port,'/v1/interpret-local',engine.token,body)
+        assert code==202
+        job=wait(port,engine.token,result['job_id'])
+        assert job['status']=='completed'
+        assert job['result']['setup']['pacing']=='Calm'
+        code,result,_=request(port,'/v1/build',engine.token,body)
+        assert code==202
+        assert wait(port,engine.token,result['job_id'])['result']['plan']['pacing']=='Calm'

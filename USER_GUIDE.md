@@ -5,7 +5,7 @@ A practical reference for setting up and using the project, including after a lo
 **Project:** [amandeepheer/ai-event-editor](https://github.com/amandeepheer/ai-event-editor)  
 **Use this branch:** `main`  
 **Guide updated:** 4 November 2026  
-**Current release in the repository:** development preview, version 0.3.0
+**Current release in the repository:** development preview, version 0.4.0
 
 > The automated tests passed, but this preview has not yet been verified inside installed Windows/Premiere Pro. A basic installer preview is available through a successful Windows build; it is not a verified production release. Test with a small copy of an event project before using it for a client delivery.
 
@@ -23,7 +23,7 @@ The helper connection does not upload your footage or use a paid cloud AI servic
 
 ## Windows installer route — no Python commands
 
-Use the latest successful [Windows installer build](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml). Download **AI-Event-Editor-Windows-Installer**, extract the ZIP and run the Setup `.exe` inside. GitHub may require you to sign in to download Actions artifacts.
+Use the latest successful [Windows installer build](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml). Download **AI-Event-Editor-AI-Installer**, extract the ZIP and run the Setup `.exe` inside. GitHub may require you to sign in to download Actions artifacts.
 
 1. Run Setup and open **AI Event Editor Setup and Status**.
 2. Click **Finish setup**. It downloads media tools once if needed (approximately 81 MB; internet required), verifies the archive and prepares automatic startup.
@@ -32,7 +32,7 @@ Use the latest successful [Windows installer build](https://github.com/amandeeph
 5. In the panel click **Set up automatic start**. Select `engine-connection.json` from the setup window's **Open connection-file folder** location. Keep that private file.
 6. Continue with the everyday editing section below. You do not need the source-development/Python steps that follow.
 
-The installer bundles the basic engine and Python, not GPU AI packages/models, Ollama, Premiere itself or a standalone MP4 editor. Adobe installation/permissions and real Premiere behavior still need verification on your PC. Source-development setup remains documented below for developers and for the optional standalone editor.
+The installer includes the basic engine and an AI runtime. Use Setup and Status to optionally download CLIP packages/model (CPU or NVIDIA), install Ollama and download Qwen. Large AI downloads are not embedded in Setup and require internet/free disk space. Premiere itself and a standalone MP4 editor are not included. Adobe installation/permissions and real Premiere behavior still need verification on your PC. Source-development setup remains documented below for developers and for the optional standalone editor.
 
 ## 2. First-time Windows setup
 
@@ -145,7 +145,7 @@ Include crowd. Exclude stalls.
 
 Click **Review instructions** to see the proposed changes. Then adjust your choices if needed.
 
-The current interpreter understands a limited set of offline rules: duration, one style, one pacing choice, and explicit category inclusion/exclusion. It is **not** a general chat assistant.
+The current interpreter understands a limited set of offline rules: duration, one style, one pacing choice, and explicit category inclusion/exclusion. The default rules are **not** a general chat assistant. Optional local Ollama/Qwen can interpret broader phrasing when installed and enabled; its proposed changes must still be reviewed. See [AI setup](docs/AI_ADDON.md).
 
 `Include crowd` pins one kept crowd moment. If there is no kept moment labelled crowd, the plugin asks you to keep/relabel one. Repeat commands for multiple categories, for example `Include crowd. Include dancing.` User-rejected moments are not automatically restored.
 
@@ -228,7 +228,7 @@ Record the exact panel/helper error, Premiere version, action that triggered it,
 | Implemented; still requires installed Windows/Premiere verification | Actual helper launch/permissions, panel rendering, Source Monitor preview and native editable-sequence creation |
 | Available separately | Standalone desktop workflow, normal-speed MP4 rendering, CLI tools and experimental XML export |
 | Not implemented for the plugin workflow | Actual slow motion/speed ramps, effect-intensity controls, native titles/captions, interview/speech editing and music ducking |
-| Still pending | GPU-model packaging, general natural-language understanding, full review-session recovery and real-camera visual/performance evaluation |
+| Still pending | NVIDIA/real-Qwen verification, arbitrary timeline understanding, full review-session recovery and real-camera visual/performance evaluation |
 
 **Verified baseline:** GitHub Actions [run #80](https://github.com/amandeepheer/ai-event-editor/actions/runs/41747250384) passed **249 tests** on code commit `6acccd2`. This is a dated reference, not a claim about all future revisions. Check the [latest Actions runs](https://github.com/amandeepheer/ai-event-editor/actions) after later updates. Automated tests do not prove installed Premiere behaviour.
 

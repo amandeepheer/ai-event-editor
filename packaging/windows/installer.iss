@@ -1,5 +1,5 @@
 #ifndef AppVersion
-#define AppVersion "0.3.0"
+#define AppVersion "0.4.0"
 #endif
 [Setup]
 AppId={{9B923B36-F8D4-45ED-B705-F69010832A9D}
@@ -12,7 +12,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..\dist\installer
-OutputBaseFilename=AI-Event-Editor-Setup-{#AppVersion}-Windows-x64
+OutputBaseFilename=AI-Event-Editor-AI-Setup-{#AppVersion}-Windows-x64
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

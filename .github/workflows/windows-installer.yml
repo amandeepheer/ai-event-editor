@@ -14,7 +14,7 @@ permissions:
 jobs:
   build:
     runs-on: windows-2025
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,10 +32,13 @@ jobs:
           $process = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/DIR=`"$installedApp`"") -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "Installer failed: $($process.ExitCode)" }
           python packaging/windows/smoke_test.py "$installedApp"
+      - name: Verify real CLIP CPU add-on in installed edition
+        shell: pwsh
+        run: python packaging/windows/smoke_ai.py "$env:RUNNER_TEMP/AI Event Editor Installed"
       - name: Publish downloadable installer
         uses: actions/upload-artifact@v4
         with:
-          name: AI-Event-Editor-Windows-Installer
+          name: AI-Event-Editor-AI-Installer
           path: |
             dist/download/*
           if-no-files-found: error

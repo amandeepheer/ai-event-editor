@@ -21,7 +21,7 @@ A packaged installer and automatic review-session recovery are not implemented. 
 
 ## Supported typed instructions
 
-The current interpreter is a deterministic offline parser, not a general language model. Supported examples:
+The default interpreter is a deterministic offline parser. The AI Edition optionally uses local Ollama/Qwen for broader phrasing, translated into validated supported settings; see `AI_ADDON.md`. Supported examples:
 
 - `Make a one-minute cinematic recap with energetic pacing.`
 - `Create a 30-second wedding highlight with calm pacing.`

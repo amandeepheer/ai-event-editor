@@ -18,12 +18,30 @@ def package_panel(destination):
         assert archive.testzip() is None
 
 
+def prepare_ai_payload(output):
+    """Copy an isolated CPython runtime; large ML packages are installed only on demand."""
+    runtime=output/'AIAddon'/'python';runtime.mkdir(parents=True,exist_ok=True)
+    home=Path(sys.base_prefix)
+    for name in ('python.exe','pythonw.exe','LICENSE.txt'):
+        shutil.copy2(home/name,runtime/name)
+    for path in home.glob('*.dll'):shutil.copy2(path,runtime/path.name)
+    shutil.copytree(home/'DLLs',runtime/'DLLs',dirs_exist_ok=True)
+    shutil.copytree(home/'Lib',runtime/'Lib',ignore=shutil.ignore_patterns('site-packages','__pycache__','test','tests','idlelib','turtledemo','ensurepip'),dirs_exist_ok=True)
+    (runtime/'Lib'/'site-packages').mkdir(exist_ok=True)
+    (runtime/f'python{sys.version_info.major}{sys.version_info.minor}._pth').write_text('DLLs\nLib\nLib/site-packages\n../source\nimport site\n',encoding='utf-8')
+    source=output/'AIAddon'/'source';source.mkdir(exist_ok=True)
+    shutil.copytree(ROOT/'ai_event_editor',source/'ai_event_editor',ignore=shutil.ignore_patterns('__pycache__'),dirs_exist_ok=True)
+    (source/'pip_bootstrap.py').write_text("import runpy,sys\nsys.path.insert(0,sys.argv.pop(1))\nrunpy.run_module('pip',run_name='__main__')\n",encoding='utf-8')
+    subprocess.run([sys.executable,'-m','pip','download','--no-deps','--dest',str(output/'AIAddon'/'wheels'),'pip==25.3'],check=True)
+
+
 def main():
     subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--clean','--onedir','--windowed',
         '--name','AIEventEngine','--paths',str(ROOT),'--exclude-module','torch',
         '--exclude-module','transformers','--exclude-module','PIL',
         str(ROOT/'packaging/windows/engine_entry.py')],cwd=ROOT,check=True)
     output=ROOT/'dist'/'AIEventEngine'
+    prepare_ai_payload(output)
     package_panel(output/'AIEventEditor-Premiere.ccx')
     shutil.copy2(ROOT/'packaging/windows/INSTALL_README.txt',output)
     shutil.copy2(ROOT/'USER_GUIDE.md',output)

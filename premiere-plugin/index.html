@@ -20,7 +20,7 @@
 <div id="shots"></div>
 </section>
 <section><h2>3 · Describe your edit</h2><label for="instruction">Instructions (optional)</label><textarea id="instruction" rows="3" placeholder="Make a one-minute cinematic recap with energetic pacing. Include crowd. Exclude stalls."></textarea>
-<p class="hint">Supports length, pacing, style and include/exclude categories. Slow motion, effects, titles and speech editing are not implemented yet.</p>
+<label class="check"><input id="use-language-model" type="checkbox"> Use local Ollama/Qwen for broader instructions (optional)</label><p class="hint">Install Ollama and the language model through Setup and Status first. Review model suggestions. Supports length, pacing, style and include/exclude categories. Slow motion, effects, titles and speech editing are not implemented yet.</p>
 <div class="actions"><button id="interpret" class="secondary">Review instructions</button><button id="build">Build reviewed edit</button></div><pre id="instruction-result">Your review choices stay in your control.</pre><pre id="edit-summary">No edit built yet.</pre>
 <label class="check"><input type="checkbox" id="confirm-create"> Create a new sequence from this reviewed edit</label><button id="create-sequence">Create Premiere sequence</button>
 <p class="hint">Native integration is experimental. Review timing, framing and sound in Premiere. Existing sequences are preserved.</p>

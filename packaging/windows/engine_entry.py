@@ -26,6 +26,9 @@ def main():
         install_media_tools(progress=print)
         from ai_event_editor.service import configure_plugin
         configure_plugin();return
+    if '--install-ai-cpu' in sys.argv or '--install-ai-gpu' in sys.argv:
+        from ai_event_editor.ai_runtime import install_clip
+        install_clip('cuda' if '--install-ai-gpu' in sys.argv else 'cpu',progress=print);return
     if '--diagnostics' in sys.argv:
         path=Path(sys.argv[sys.argv.index('--diagnostics')+1])
         import shutil

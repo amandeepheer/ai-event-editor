@@ -75,7 +75,8 @@ def prepare_footage(paths, cache_dir, use_ai=False, progress=None, thumbnail_for
     if use_ai:
         if progress:
             progress('Analyzing locally with cached CLIP model…')
-        observations = analyze_media(media, VisionWorker(local_files_only=True)) if media else []
+        from .ai_runtime import ready,analyze as managed_analyze
+        observations = (managed_analyze(media) if ready() else analyze_media(media, VisionWorker(local_files_only=True))) if media else []
     else:
         observations = []
         for clip in media:
