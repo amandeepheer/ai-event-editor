@@ -1,7 +1,7 @@
 {
   "id": "com.aieventeditor.panel",
   "name": "AI Event Editor",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "main": "index.html",
   "manifestVersion": 5,
   "host": {
