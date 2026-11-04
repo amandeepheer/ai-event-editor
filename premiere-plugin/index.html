@@ -1,35 +1,36 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>AI Event Editor</title><link rel="stylesheet" href="style.css"></head>
 <body><main>
-<h1>AI Event Editor</h1><p class="intro">Your footage. Your music. An editable Premiere timeline.</p>
-<p class="hint">Panel version 0.5.2 · Local connection compatibility update</p>
-<section><h2>Local engine</h2><p id="connection-status">Set up once to connect automatically when this panel opens.</p><button id="configure-autostart">Set up automatic start</button><p class="hint">First run scripts/Configure-Premiere-Autostart.cmd, then select the engine-connection.json it creates. Adobe may ask permission to launch the helper.</p>
+<header><p class="eyebrow">AI EVENT EDITOR <span class="local-badge">LOCAL</span></p><h1>Event recap</h1><p class="intro">Turn your event footage into an editable rough cut.</p><div class="actions"><button id="toggle-connection" class="secondary">Connection &amp; setup</button><span class="hint">Panel 0.5.3</span></div></header>
+<nav class="steps" aria-label="Event recap workflow"><button id="step-setup" aria-pressed="true">1 · Setup</button><button id="step-review" class="secondary" aria-pressed="false">2 · Review</button><button id="step-create" class="secondary" aria-pressed="false">3 · Create</button></nav>
+<section id="connection-panel" hidden><h2>Local engine</h2><p id="connection-status">Set up once to connect automatically when this panel opens.</p><button id="configure-autostart">Set up automatic start</button><p class="hint">First run scripts/Configure-Premiere-Autostart.cmd, then select the engine-connection.json it creates. Adobe may ask permission to launch the helper.</p>
 <label for="pairing-code">Pairing code</label><input id="pairing-code" type="password" placeholder="Paste the code shown by your local helper">
 <div class="actions"><button id="connect">Connect</button><button id="inspect" class="secondary">Inspect Premiere</button></div>
 </section>
-<section><h2>1 · Footage & music</h2>
+<div id="screen-setup"><section><h2>Footage</h2>
 <button id="use-project-media">Use selected project media</button><p class="hint">Import into Premiere’s Project panel, select videos/audio or bins, then use the selection here. No existing timeline is needed. Build can prepare the footage automatically. Refresh this selection explicitly when it changes.</p><pre id="project-media-report"></pre>
 <div class="actions"><button id="add-footage">Add footage</button><button id="clear-footage" class="secondary">Clear</button></div><p id="footage-summary">No clips selected</p>
-<div id="project-music-field" hidden><label for="project-music">Music from selected project audio</label><select id="project-music"><option value="">No music</option></select></div>
+</section><section><h2>Music</h2><p class="hint">Choose a track and the part you want to use. Music is optional.</p><div id="project-music-field" hidden><label for="project-music">Music from selected project audio</label><select id="project-music"><option value="">No music</option></select></div>
 <div class="actions"><button id="choose-music" class="secondary">Choose music</button><button id="clear-music" class="secondary">No music</button><button id="preview-music" class="secondary">Preview in Premiere</button></div><p id="music-summary">Music optional</p>
 <div class="row"><div><label for="audio-start">Music start (seconds)</label><input id="audio-start" type="number" value="0" min="0" step="0.1"></div><div><label for="audio-end">End (optional)</label><input id="audio-end" type="number" min="0" step="0.1" placeholder="Start + edit length"></div></div>
-<label for="duration-preset">Edit length</label><select id="duration-preset"><option value="30">30 seconds</option><option value="60" selected>1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="custom">Custom</option><option value="auto">Auto (not available yet)</option></select>
+</section><section><h2>Length &amp; pacing</h2><label for="duration-preset">Edit length</label><select id="duration-preset"><option value="30">30 seconds</option><option value="60" selected>1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="custom">Custom</option><option value="auto">Auto (not available yet)</option></select>
 <div id="custom-duration" hidden><label for="custom-seconds">Custom seconds (30–300)</label><input id="custom-seconds" type="number" min="30" max="300" value="90"></div><p id="duration-summary">Selected: 1:00</p>
 <div class="row"><div><label for="style">Style</label><select id="style"><option value="energetic-event">Event highlights</option><option value="cinematic">Cinematic</option><option value="wedding">Wedding</option><option value="concert">Concert / stage</option><option value="social-reel">Social reel</option><option value="documentary">Documentary</option></select></div><div><label for="pacing">Pacing</label><select id="pacing"><option>Calm</option><option selected>Balanced</option><option>Energetic</option></select></div></div>
-<label class="check"><input id="use-ai" type="checkbox"> Suggest categories with cached local AI</label><p class="hint" id="analysis-hint">Default: unranked moments for your review. Optional AI needs installed vision extras and cached weights.</p>
-<button id="prepare">Prepare moments</button></section>
-<section><h2>2 · Review moments</h2><p id="review-summary">Prepare footage to see thumbnails and choose moments.</p>
-<div class="actions"><button id="previous" class="secondary">Previous</button><span id="page-summary">0 moments</span><button id="next" class="secondary">Next</button></div>
-<div id="shots"></div>
-</section>
-<section><h2>3 · Describe your edit</h2><label for="instruction">Instructions (optional)</label><textarea id="instruction" rows="3" placeholder="Make a one-minute cinematic recap with energetic pacing. Include crowd. Exclude stalls."></textarea>
+</section><section><h2>Your instructions</h2><label for="instruction">Instructions (optional)</label><textarea id="instruction" rows="3" placeholder="Make a one-minute cinematic recap with energetic pacing. Include crowd. Exclude stalls."></textarea>
 <label class="check"><input id="use-language-model" type="checkbox"> Use local Ollama/Qwen for broader instructions (optional)</label><p class="hint">Install Ollama and the language model through Setup and Status first. Review model suggestions. Supports length, pacing, style and include/exclude categories. Slow motion, effects, titles and speech editing are not implemented yet.</p>
-<div class="actions"><button id="interpret" class="secondary">Review instructions</button><button id="build">Build reviewed edit</button></div><pre id="instruction-result">Your review choices stay in your control.</pre><pre id="edit-summary">No edit built yet.</pre>
-<label class="check"><input type="checkbox" id="confirm-create"> Create a new sequence from this reviewed edit</label><button id="create-sequence">Create Premiere sequence</button>
+<label class="check"><input id="use-ai" type="checkbox"> Suggest categories with cached local AI</label><p class="hint" id="analysis-hint">Default: unranked moments for your review. Optional AI needs installed vision extras and cached weights.</p>
+<button id="interpret" class="secondary">Review instructions</button><pre id="instruction-result">Your review choices stay in your control.</pre><button id="prepare" class="primary-wide">Find moments to review</button></section></div>
+<div id="screen-review" hidden><section><h2>Review moments</h2><p class="hint">Keep the moments you like. Reject unwanted shots or mark a moment Must include. Categories are optional to adjust.</p><p id="review-summary">Prepare footage to see thumbnails and choose moments.</p>
+<div class="actions"><button id="previous" class="secondary">Previous</button><span id="page-summary">0 moments</span><button id="next" class="secondary">Next</button></div>
+<div id="shots"></div><button id="build" class="primary-wide">Build reviewed edit</button></section></div>
+<div id="screen-create" hidden><section><h2>Create your recap</h2><p class="hint">Check source variety and timing, then create a new editable sequence.</p>
+<pre id="edit-summary">No edit built yet.</pre>
+<label class="check"><input type="checkbox" id="confirm-create"> Create a new sequence from this reviewed edit</label><button id="create-sequence" class="primary-wide">Create Premiere sequence</button>
 <p class="hint">Native integration is experimental. Review timing, framing and sound in Premiere. Existing sequences are preserved.</p>
 </section>
-<section><h2>Native Premiere tools</h2><p>Check which editing APIs and effect catalogs your Premiere exposes. This reads information without changing your project. Features still need implementation and editing tests.</p><div class="actions"><button id="check-native-tools" class="secondary">Check native tools</button><button id="save-native-report" class="secondary">Save tool report</button></div><pre id="native-report">No native tool check run yet.</pre></section>
+</div>
+<div class="actions utility-toggle"><button id="toggle-utilities" class="secondary">Saved edits &amp; advanced tools</button></div><div id="utilities" hidden><section><h2>Native Premiere tools</h2><p>Check which editing APIs and effect catalogs your Premiere exposes. This reads information without changing your project. Features still need implementation and editing tests.</p><div class="actions"><button id="check-native-tools" class="secondary">Check native tools</button><button id="save-native-report" class="secondary">Save tool report</button></div><pre id="native-report">No native tool check run yet.</pre></section>
 <section><h2>Saved edits & tools</h2><div class="actions"><button id="save-plan" class="secondary">Save edit</button><button id="open-plan" class="secondary">Open saved edit</button><button id="toggle-plan" class="secondary">Show plan tools</button></div>
 <div id="plan-tools" hidden><label for="plan">Edit plan JSON</label><textarea id="plan" rows="6"></textarea><button id="validate" class="secondary">Validate plan</button></div></section>
-<pre id="status" role="status" aria-live="polite">Ready. Connect the local helper to prepare your footage.</pre>
+</div><pre id="status" role="status" aria-live="polite">Ready. Connect the local helper to prepare your footage.</pre>
 </main><script src="main.js"></script></body></html>

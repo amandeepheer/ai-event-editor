@@ -17,6 +17,12 @@ const automatic=new AutoStart({client,storage:uxp.storage.localFileSystem,shell:
 const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,busy:false,connected:false,capabilities:null,projectId:null,projectAudio:[],musicPending:false};
 const pageSize=12;
 function message(value){$('status').textContent=value;}
+function showStep(step){
+  for(const name of ['setup','review','create']){
+    $('screen-'+name).hidden=name!==step;
+    $('step-'+name).setAttribute('aria-pressed',String(name===step));
+  }
+}
 function invalidate(){state.plan=null;$('plan').value='';$('confirm-create').checked=false;$('edit-summary').textContent='Inputs changed. Build the reviewed edit again.';}
 function selectedDuration(){
   if($('duration-preset').value==='auto')throw new Error('Choose a length from 30–300 seconds; automatic length is not available yet.');
@@ -92,6 +98,7 @@ async function prepareMoments(){
   state.session=result.session_id;state.candidates=result.candidates;state.page=0;
   for(const c of state.candidates){if(old.has(c.id)){c.decision=old.get(c.id).decision;c.category=old.get(c.id).category;}}
   drawShots();
+  showStep('review');
   if(result.errors.length)$('project-media-report').textContent+='\nPreparation issues:\n'+result.errors.join('\n');
   message(result.analysis+'\n'+(result.errors.length?result.errors.join('\n'):'Moments ready for review.'));
 }
@@ -101,7 +108,7 @@ async function ensurePrepared(){
   setup(); // Resolve ambiguous music choices before starting expensive analysis.
   if(!state.session)await prepareMoments();
 }
-function setPlan(plan){state.plan=validatePlan(plan);$('plan').value=JSON.stringify(state.plan,null,2);$('confirm-create').checked=false;$('edit-summary').textContent=state.plan.duration_seconds+' seconds · '+state.plan.segments.length+' editable video segments · '+state.plan.fps+' fps\n'+(state.plan.warnings||[]).join('\n');}
+function setPlan(plan){state.plan=validatePlan(plan);$('plan').value=JSON.stringify(state.plan,null,2);$('confirm-create').checked=false;const used=new Set(state.plan.segments.map(s=>s.path)).size;$('edit-summary').textContent=state.plan.duration_seconds+' seconds · '+state.plan.segments.length+' editable video segments · '+used+' source videos · '+state.plan.fps+' fps\n'+(state.plan.warnings||[]).join('\n');showStep('create');}
 function adopt(result){
   const s=result.setup;
   if(['30','60','120','300'].includes(String(s.duration)))$('duration-preset').value=String(s.duration);
@@ -149,6 +156,9 @@ async function previewSource(path,start,end){
   message('Source Monitor opened at '+start.toFixed(2)+'s. Review until '+end.toFixed(2)+'s using Premiere playback controls.');
 }
 for(const id of ['audio-start','audio-end','custom-seconds','instruction'])$(id).addEventListener('input',invalidate);
+for(const step of ['setup','review','create'])bind('step-'+step,async()=>showStep(step));
+bind('toggle-connection',async()=>{$('connection-panel').hidden=!$('connection-panel').hidden;});
+bind('toggle-utilities',async()=>{$('utilities').hidden=!$('utilities').hidden;});
 for(const id of ['duration-preset','style','pacing','use-ai','use-language-model'])$(id).addEventListener('change',()=>{if(id==='use-ai')state.session=null;invalidate();updateDuration();});
 $('custom-seconds').addEventListener('input',updateDuration);updateDuration();
 bind('configure-autostart',async()=>{
@@ -159,8 +169,8 @@ bind('configure-autostart',async()=>{
   message('Connected. You can prepare footage inside Premiere.');
 });
 onPanelShow=()=>perform(async()=>{
-  try{if(await automatic.restore()){state.connected=true;$('connection-status').textContent='Connected automatically to your local engine.';message('Ready. Add footage or continue reviewing your edit.');}}
-  catch(error){state.connected=false;$('connection-status').textContent='Automatic connection needs attention.';throw error;}
+  try{if(await automatic.restore()){state.connected=true;$('connection-status').textContent='Connected automatically to your local engine.';message('Ready. Add footage or continue reviewing your edit.');}else{$('connection-panel').hidden=state.connected;}}
+  catch(error){state.connected=false;$('connection-panel').hidden=false;$('connection-status').textContent='Automatic connection needs attention.';throw error;}
 });
 bind('connect',async()=>{
   state.connected=false;$('connection-status').textContent='Connecting to the local helper…';
@@ -192,7 +202,7 @@ bind('preview-music',async()=>{if(!state.music)throw new Error('Choose music fir
 bind('prepare',prepareMoments);
 bind('previous',async()=>{state.page=Math.max(0,state.page-1);drawShots();});
 bind('next',async()=>{state.page++;drawShots();});
-bind('interpret',async()=>{await ensurePrepared();const body=payload();const result=body.instruction_mode==='ollama'?await client.operation('/v1/interpret-local',body,message):await client.request('/v1/interpret',body);await checkProject();adopt(result);message(result.unsupported.length?'Revise unsupported instructions before building.':'Instruction changes are shown above. Build when your review is ready.');});
+bind('interpret',async()=>{await ensurePrepared();const body=payload();const result=body.instruction_mode==='ollama'?await client.operation('/v1/interpret-local',body,message):await client.request('/v1/interpret',body);await checkProject();adopt(result);showStep('setup');message(result.unsupported.length?'Revise unsupported instructions before building.':'Instruction changes are shown above. Continue to Review when ready.');});
 bind('build',async()=>{
   invalidate();await ensurePrepared();const result=await client.operation('/v1/build',payload(),message);await checkProject();
   setPlan(result.plan);$('instruction-result').textContent=result.instructions.applied.join('\n')||'Using your reviewed setup.';

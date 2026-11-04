@@ -48,18 +48,21 @@ Module._load=function(name,parent,isMain){if(name==='uxp')return uxp;if(name==='
 const panel=require('../premiere-plugin/main.js');
 const click=id=>elements[id].fire('click');
 (async()=>{
+  await click('step-review');assert.equal(elements['screen-review'].hidden,false);assert.equal(elements['screen-setup'].hidden,true);
+  await click('step-setup');assert.equal(elements['screen-setup'].hidden,false);
+  await click('toggle-connection');await click('toggle-utilities');
   elements['pairing-code'].value='paired-secret';await click('connect');assert(panel.state.connected);
   pickers.push([{nativePath:'C:/event1.mp4',name:'event1.mp4'}]);await click('add-footage');
   assert.deepEqual(panel.state.paths,['C:/event1.mp4']);
   pickers.push({nativePath:'C:/music.wav',name:'music.wav'});await click('choose-music');assert.equal(panel.state.music,'C:/music.wav');
-  await click('prepare');assert.equal(panel.state.candidates.length,14);assert.equal(elements.shots.children.length,12);
+  await click('prepare');assert.equal(elements['screen-review'].hidden,false);assert.equal(panel.state.candidates.length,14);assert.equal(elements.shots.children.length,12);
   const card=elements.shots.children[0];await card.children[1].children[1].fire('click');assert.equal(panel.state.candidates[0].decision,'reject');
   await click('next');assert.equal(elements.shots.children.length,2);
   await elements.shots.children[1].children[1].children[2].fire('click');assert.equal(panel.state.candidates[13].decision,'must_include');
   await elements.shots.children[0].children[1].children[3].fire('click');assert.deepEqual(previews,['C:/event12.mp4',0]);
   elements.instruction.value='Make a 30-second energetic recap';await elements.instruction.fire('input');await click('interpret');
   assert.equal(elements['duration-preset'].value,'30');assert.equal(elements.pacing.value,'Energetic');
-  await click('build');assert(panel.state.plan);assert.equal(panel.state.plan.duration_frames,750);
+  await click('build');assert(panel.state.plan);assert.equal(elements['screen-create'].hidden,false);assert(elements['edit-summary'].textContent.includes('1 source videos'));assert.equal(panel.state.plan.duration_frames,750);
   const sent=requests.find(r=>r.path==='build').body;
   assert.equal(sent.review[0].decision,'reject');assert.equal(sent.review[13].decision,'must_include');
   assert(sent.review.every(c=>Object.keys(c).sort().join(',')==='category,decision,id'));

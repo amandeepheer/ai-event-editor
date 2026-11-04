@@ -1,11 +1,17 @@
-AI EVENT EDITOR - AI EDITION / ADD-ON PREVIEW 0.5.2
+AI EVENT EDITOR - AI EDITION / ADD-ON PREVIEW 0.5.3
+
+
+0.5.3 adds a guided Setup / Review / Create Premiere workspace and rotates
+source videos in the shared planner. Install the application update (not just
+the Adobe panel) for the source-variety fix. Existing model downloads are kept.
+Restart the old helper and Premiere after updating.
 
 This installer includes the updated basic program plus a managed Python runtime
 for optional AI packages. It can replace the earlier basic installer; no separate
 system Python or terminal commands are required. Save your work and close an
 older running engine before upgrading. It does not uninstall your footage/data.
 
-0.5.2 uses Adobe's documented broader network permission after local-only entries
+0.5.3 uses Adobe's documented broader network permission after local-only entries
 were rejected on Premiere 26.5.2. Adobe may describe it as access to all domains;
 our client code still allows only http://127.0.0.1:8765 and rejects redirects.
 No cloud connection is added. This workaround needs an installed-host retest.

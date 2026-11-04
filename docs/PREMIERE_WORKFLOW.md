@@ -68,3 +68,30 @@ The plugin only declares `.cmd` launch permission. It launches the fixed filenam
 The helper can remain idle after Premiere closes and is reused on the next opening. Manual startup remains available via `Start-Local-Engine.cmd` or `python -m ai_event_editor.service`. Configuration and launcher generation are tested on synthetic paths; automatic launch/consent are tested with an explicit UXP shell test double. Installed Windows launch, persistence and Adobe dialogs are still unverified.
 
 Launch API reference: https://developer.adobe.com/premiere-pro/uxp/resources/recipes/external-process/
+
+## Event recap workspace (0.5.3)
+
+The Premiere panel groups the existing local workflow into three screens:
+Setup (Project-panel footage, optional music excerpt, length, pacing and typed
+instructions), Review (thumbnails, Keep/Reject/Must include), and Create (source
+count, timing summary and confirmation for a new editable sequence). Connection
+settings and saved-edit/native diagnostic tools remain available behind their
+own buttons. Review choices persist when switching screens. Ollama/Qwen is
+already integrated for the supported instruction fields; enable it in Setup.
+Cherry Studio and a third-party MCP connector are not required.
+
+This layout adapts the guided event recap workflow shown by AutoEdit, using
+our own controls and existing engine. It does not add AutoEdit's interview
+analysis, effects presets, transitions, music ducking or manual BPM tapping.
+Those remain separate development milestones, not working controls in this UI.
+
+The shared planner rotates source files within each category, retaining ranked
+moments within each file and prioritizing Must include excerpts. Categories,
+short sources, pins and edit length can still prevent every file appearing.
+The Create summary reports the number of source videos actually used; a warning
+reports when eligible sources were omitted. Source ranges are not reused.
+
+A panel-only update does not update the Python planner in an installed Windows
+helper. Install the matching 0.5.3 Windows application to receive the planner fix;
+keep existing model downloads, and restart the old helper and Premiere afterward.
+Installed Premiere rendering and real-media edits still require host verification.

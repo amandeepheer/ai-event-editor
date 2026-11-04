@@ -8,7 +8,7 @@ Local-first event highlight editing with one shared Python engine, a Windows-fri
 
 ## Windows AI Edition installer preview
 
-The [Windows installer workflow](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml) builds **AI-Event-Editor-AI-Setup-0.5.2-Windows-x64.exe**, available in its successful **AI-Event-Editor-AI-Installer** artifact. Extract the download and run Setup. No system Python or terminal commands are needed. Artifacts expire after 30 days; use the latest passing build.
+The [Windows installer workflow](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml) builds **AI-Event-Editor-AI-Setup-0.5.3-Windows-x64.exe**, available in its successful **AI-Event-Editor-AI-Installer** artifact. Extract the download and run Setup. No system Python or terminal commands are needed. Artifacts expire after 30 days; use the latest passing build.
 
 The updated installer includes the basic engine, setup/status app, Adobe CCX panel and an isolated Python runtime for optional AI. Finish basic setup, install the Adobe panel, then optionally install CLIP (CPU or NVIDIA) through Setup and Status. Optional Ollama and Qwen download buttons enable broader local interpretation when selected in the panel. Downloads can be several GB; they are explicit setup operations and are not silently performed when the panel opens.
 

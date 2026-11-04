@@ -103,9 +103,28 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
     allocation = _allocate(target_frames, weights, capacity, minimum)
     segments, position = [], 0
     for index, (category, group, remaining) in enumerate(zip(ORDER, grouped, allocation)):
-        pending = deque((s, s.start, int((s.end-s.start)*FPS+1e-7)) for s in group if int((s.end-s.start)*FPS+1e-7)>0)
+        # Rank moments within each source, but rotate sources at every cut. A long
+        # file with many equally ranked windows must not crowd out other cameras.
+        pending, pinned = {}, deque()
+        for shot in group:
+            available = int((shot.end-shot.start)*FPS+1e-7)
+            if available < 1:
+                continue
+            queue = pending.setdefault(shot.path, deque())
+            entry = (shot, shot.start, available)
+            (pinned if shot.must_include else queue).append(entry)
+        sources = deque(pending)
+        reserve = sum(min(cap, targets[index]) for _, _, cap in pinned)
         while remaining:
-            shot, source, available = pending.popleft()
+            if pinned:
+                shot, source, available = pinned.popleft()
+                reserve -= min(available, targets[index])
+            else:
+                while not pending[sources[0]]:
+                    sources.popleft()
+                path = sources[0]
+                sources.rotate(-1)
+                shot, source, available = pending[path].popleft()
             energy = (section_energy or {}).get(category, mix.energy if mix else 50)
             target = targets[index]
             if music_energy:
@@ -113,7 +132,6 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
                 # More movement in louder music passages, without changing effect frequency.
                 target = max(FPS//2, round(target*(1.3-0.6*nearest['energy'])))
             # Reserve a useful excerpt for each still-pending pinned moment.
-            reserve = sum(min(cap, targets[index]) for other, offset, cap in pending if other.must_include and offset == other.start)
             limit = remaining-reserve
             if shot.must_include and source == shot.start:
                 target = min(targets[index], available)
@@ -130,13 +148,16 @@ def plan(shots: list[Shot], beats: list[float], duration: int = 60, style=None, 
             remaining -= frames
             position += frames
             if available > frames:
-                pending.append((shot, source+frames/FPS, available-frames))
+                pending[shot.path].append((shot, source+frames/FPS, available-frames))
     missing = [c for c, cap in zip(ORDER, capacity) if not cap]
     from .edit_plan import validate_plan
     return validate_plan({"schema_version": 1, "fps": FPS, "duration_seconds": duration,
         "duration_frames": target_frames, "style": style.slug if style else None,
         "dynamic_mix": mix.to_dict() if mix else None, "section_energy": section_energy or {},
         "segments": segments, "missing_categories": missing,
-        "warnings": (["Missing coverage: " + ', '.join(missing)] if missing else []) + [
+        "warnings": (["Missing coverage: " + ', '.join(missing)] if missing else []) +
+            (["Edit uses " + str(len({s['path'] for s in segments})) + " of " +
+              str(len({s.path for s in unique})) + " eligible source videos; duration, category allocation and Must include choices can limit coverage."]
+             if {s['path'] for s in segments} != {s.path for s in unique} else []) + [
             "Shot categories and quality scores require human review",
             "Speed effects remain planning metadata; native Premiere compatibility requires host testing"]})
