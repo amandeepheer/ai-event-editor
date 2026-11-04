@@ -8,12 +8,13 @@ const {EngineClient}=require('./engine.js');
 const {validatePlan,preflightPlan}=require('./edit-plan.js');
 const {applyNewSequence}=require('./premiere.js');
 const {inspectCapabilities,formatCapabilities}=require('./capabilities.js');
+const {selectedProjectMedia,requireProject}=require('./project-media.js');
 const $=id=>document.getElementById(id);
 const client=new EngineClient();
 const {AutoStart}=require('./autostart.js');
 const uxp=require('uxp');
 const automatic=new AutoStart({client,storage:uxp.storage.localFileSystem,shell:uxp.shell,platform:require('os').platform(),progress:message});
-const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,busy:false,connected:false,capabilities:null};
+const state={paths:[],music:'',candidates:[],session:null,page:0,plan:null,busy:false,connected:false,capabilities:null,projectId:null,projectAudio:[],musicPending:false};
 const pageSize=12;
 function message(value){$('status').textContent=value;}
 function invalidate(){state.plan=null;$('plan').value='';$('confirm-create').checked=false;$('edit-summary').textContent='Inputs changed. Build the reviewed edit again.';}
@@ -29,6 +30,7 @@ function updateDuration(){
   catch(error){$('duration-summary').textContent=error.message;}
 }
 function setup(){
+  if(state.musicPending)throw new Error('Choose one project audio file as music, or choose No music, before building.');
   const start=Number($('audio-start').value);
   const end=$('audio-end').value.trim()?Number($('audio-end').value):null;
   if(!Number.isFinite(start)||start<0||(end!==null&&(!Number.isFinite(end)||end<=start)))throw new Error('Choose a valid music excerpt.');
@@ -51,6 +53,54 @@ async function perform(work){
   finally{lock(false);}
 }
 function bind(id,action){$(id).addEventListener('click',()=>perform(action));}
+async function checkProject(){if(state.projectId)await requireProject(require("premierepro"),state.projectId);}
+function projectMusicChoices(files){
+  state.projectAudio=files;
+  const select=$('project-music');while(select.firstChild)select.removeChild(select.firstChild);
+  if(files.length>1){const option=document.createElement('option');option.value='pending';option.textContent='Choose music from selected project audio…';select.appendChild(option);}
+  const none=document.createElement('option');none.value='';none.textContent='No music';select.appendChild(none);
+  files.forEach((file,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=file.name;select.appendChild(option);});
+  state.musicPending=files.length>1;
+  select.value=files.length>1?'pending':files.length===1?'0':'';
+  state.music=files.length===1?files[0].path:'';
+  $('project-music-field').hidden=files.length===0;
+  $('music-summary').textContent=state.musicPending?'Select one project audio file below':files.length===1?files[0].name:'Music optional';
+  $('audio-start').value='0';$('audio-end').value='';
+}
+async function useProjectMedia(){
+  if(!client.health)throw new Error('Connect the local engine first, then use selected project media.');
+  if(!client.health.project_media_available)throw new Error('Update the plugin and local helper to version 0.5 or newer, stop the older helper, then reconnect to use Project panel media.');
+  const result=await selectedProjectMedia(require("premierepro"));
+  const media=await client.operation('/v1/project-media',{paths:result.files.map(f=>f.path)},message);
+  await requireProject(require("premierepro"),result.projectId);
+  if(!media.videos.length&&!media.audio.length)throw new Error('No readable video/audio found. '+media.errors.join('\n'));
+  // Replace the pool explicitly; selection changes do not quietly expand an edit.
+  state.paths=media.videos.map(f=>f.path);state.projectId=result.projectId;
+  state.session=null;state.candidates=[];state.page=0;invalidate();drawShots();
+  projectMusicChoices(media.audio);
+  $('footage-summary').textContent=state.paths.length+' videos from the Project panel';
+  const warnings=[...result.skipped,...media.errors];
+  $('project-media-report').textContent=state.paths.length+' videos · '+media.audio.length+' audio files. Whole linked source files are used; source In/Out marks, subclip bounds and source effects are not copied.\n'+warnings.join('\n');
+  message(state.paths.length?'Project media ready. Type supported instructions and build, or prepare/review moments first.':'Audio loaded. Select videos and audio together, or add footage with the file picker.');
+}
+async function prepareMoments(){
+  if(!state.paths.length)throw new Error('Select videos or a bin in the Project panel and use selected project media, or add footage.');
+  await checkProject();invalidate();
+  const old=new Map(state.candidates.map(c=>[c.id,c]));
+  const result=await client.operation('/v1/prepare',{paths:state.paths,use_ai:$('use-ai').checked},message);
+  await checkProject();
+  state.session=result.session_id;state.candidates=result.candidates;state.page=0;
+  for(const c of state.candidates){if(old.has(c.id)){c.decision=old.get(c.id).decision;c.category=old.get(c.id).category;}}
+  drawShots();
+  if(result.errors.length)$('project-media-report').textContent+='\nPreparation issues:\n'+result.errors.join('\n');
+  message(result.analysis+'\n'+(result.errors.length?result.errors.join('\n'):'Moments ready for review.'));
+}
+async function ensurePrepared(){
+  if(!state.paths.length)await useProjectMedia();
+  await checkProject();
+  setup(); // Resolve ambiguous music choices before starting expensive analysis.
+  if(!state.session)await prepareMoments();
+}
 function setPlan(plan){state.plan=validatePlan(plan);$('plan').value=JSON.stringify(state.plan,null,2);$('confirm-create').checked=false;$('edit-summary').textContent=state.plan.duration_seconds+' seconds · '+state.plan.segments.length+' editable video segments · '+state.plan.fps+' fps\n'+(state.plan.warnings||[]).join('\n');}
 function adopt(result){
   const s=result.setup;
@@ -125,34 +175,33 @@ bind('add-footage',async()=>{
   if(!files)return;for(const file of Array.isArray(files)?files:[files])if(!state.paths.includes(file.nativePath))state.paths.push(file.nativePath);
   $('footage-summary').textContent=state.paths.length+' local clips selected';state.session=null;invalidate();
 });
-bind('clear-footage',async()=>{state.paths=[];state.candidates=[];state.session=null;state.page=0;invalidate();drawShots();$('footage-summary').textContent='No clips selected';});
+bind('use-project-media',useProjectMedia);
+bind('clear-footage',async()=>{state.paths=[];state.candidates=[];state.session=null;state.page=0;state.projectId=null;invalidate();drawShots();$('footage-summary').textContent='No clips selected';$('project-media-report').textContent='';});
 bind('choose-music',async()=>{
   const file=await require('uxp').storage.localFileSystem.getFileForOpening({types:['wav','mp3','m4a','aac','flac'],allowMultiple:false});
-  if(file){state.music=file.nativePath;$('music-summary').textContent=file.name;invalidate();}
+  if(file){projectMusicChoices([]);state.music=file.nativePath;$('music-summary').textContent=file.name;invalidate();}
 });
-bind('clear-music',async()=>{state.music='';$('music-summary').textContent='Music optional';$('audio-start').value='0';$('audio-end').value='';invalidate();});
+$('project-music').addEventListener('change',()=>{
+  const value=$('project-music').value;state.musicPending=value==='pending';
+  state.music=value!==''&&value!=='pending'?state.projectAudio[Number(value)].path:'';
+  $('music-summary').textContent=state.musicPending?'Choose project music':state.music?state.projectAudio[Number(value)].name:'Music optional';
+  $('audio-start').value='0';$('audio-end').value='';invalidate();
+});
+bind('clear-music',async()=>{projectMusicChoices([]);invalidate();});
 bind('preview-music',async()=>{if(!state.music)throw new Error('Choose music first.');const s=setup();await previewSource(state.music,s.audio_start,s.audio_end===null?s.audio_start+s.duration:s.audio_end);});
-bind('prepare',async()=>{
-  if(!state.paths.length)throw new Error('Add footage first.');
-  invalidate();
-  const old=new Map(state.candidates.map(c=>[c.id,c]));
-  const result=await client.operation('/v1/prepare',{paths:state.paths,use_ai:$('use-ai').checked},message);
-  state.session=result.session_id;state.candidates=result.candidates;state.page=0;
-  for(const c of state.candidates){if(old.has(c.id)){c.decision=old.get(c.id).decision;c.category=old.get(c.id).category;}}
-  drawShots();message(result.analysis+'\n'+(result.errors.length?result.errors.join('\n'):'Moments ready for review.'));
-});
+bind('prepare',prepareMoments);
 bind('previous',async()=>{state.page=Math.max(0,state.page-1);drawShots();});
 bind('next',async()=>{state.page++;drawShots();});
-bind('interpret',async()=>{const body=payload();const result=body.instruction_mode==='ollama'?await client.operation('/v1/interpret-local',body,message):await client.request('/v1/interpret',body);adopt(result);message(result.unsupported.length?'Revise unsupported instructions before building.':'Instruction changes are shown above. Build when your review is ready.');});
+bind('interpret',async()=>{await ensurePrepared();const body=payload();const result=body.instruction_mode==='ollama'?await client.operation('/v1/interpret-local',body,message):await client.request('/v1/interpret',body);await checkProject();adopt(result);message(result.unsupported.length?'Revise unsupported instructions before building.':'Instruction changes are shown above. Build when your review is ready.');});
 bind('build',async()=>{
-  invalidate();const result=await client.operation('/v1/build',payload(),message);
+  invalidate();await ensurePrepared();const result=await client.operation('/v1/build',payload(),message);await checkProject();
   setPlan(result.plan);$('instruction-result').textContent=result.instructions.applied.join('\n')||'Using your reviewed setup.';
   message('Edit ready. Review the summary and confirm creation of a new Premiere sequence.');
 });
 bind('create-sequence',async()=>{
   if(!$('confirm-create').checked)throw new Error('Confirm creation of a new sequence first.');
   if(!state.plan)throw new Error('Build or open an edit first.');
-  try{const result=await applyNewSequence(require("premierepro"),state.plan,message);message('Created '+result.name+' with '+result.clips+' editable clips. Continue editing and export with Premiere’s normal tools.');}
+  try{const result=await applyNewSequence(require("premierepro"),state.plan,message,{expectedProjectId:state.projectId});message('Created '+result.name+' with '+result.clips+' editable clips. Continue editing and export with Premiere’s normal tools.');}
   finally{$('confirm-create').checked=false;}
 });
 bind('inspect',async()=>{const premiere=require("premierepro");const project=await premiere.Project.getActiveProject();if(!project)throw new Error('Open a Premiere project first.');const sequence=await project.getActiveSequence();message(sequence?'Active sequence: '+sequence.name:'Premiere connected. No active sequence.');});

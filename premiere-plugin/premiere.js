@@ -37,12 +37,17 @@ function checkedPlan(value) {
   }
   return plan;
 }
-async function applyNewSequence(ppro, value, progress = () => {}) {
+async function applyNewSequence(ppro, value, progress = () => {}, options = {}) {
   const plan = checkedPlan(value);
   if (!ppro.Project || !ppro.ClipProjectItem || !ppro.FolderItem || !ppro.SequenceEditor ||
       !ppro.TickTime || !ppro.FrameRate) throw new Error('Premiere UXP APIs unavailable. Premiere 26.3+ required.');
   const project = await ppro.Project.getActiveProject();
   if (!project) throw new Error('Open a Premiere project first.');
+  if (options.expectedProjectId) {
+    const {projectKey}=require('./project-media.js');
+    if (projectKey(project)!==options.expectedProjectId)
+      throw new Error('The active Premiere project changed. Select its source media again before creating a sequence.');
+  }
   const root = await project.getRootItem();
   const token = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   const binName = 'AI Event Editor ' + token;

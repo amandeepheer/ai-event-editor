@@ -14,6 +14,10 @@ Clarified direction: typed instructions should control Premiere's own native edi
 6. Fine-tune natively in Premiere. Re-run AI only on explicitly selected/unlocked elements.
 7. Optionally render an MP4 independently with FFmpeg.
 
+## Project panel source workflow (version 0.5)
+
+The plugin reads selected Project panel clips/bins, expands nested bins read-only and asks the loopback helper to classify local streams. It offers explicit music selection when several audio-only files are found. Interpret/Build prepare footage automatically if needed; no existing timeline is required. Whole linked files are used; source marks/subclip bounds/effects/proxy/interpretation overrides are not transferred. The existing new-bin/source-subclip assembly remains unchanged apart from a project-identity guard. Original source items and files are preserved. Source collection, ambiguous audio, offline/error handling, project-switch guards, real HTTP media-to-plan and packaged Windows classification/build are test-covered; installed Premiere acceptance remains pending. Effects/transition/tracking/retiming controls are separate milestones.
+
 ## Architecture
 - `ai_event_editor/`: shared media analysis, shot selection, beat detection, planning, title specifications, and validation.
 - Premiere integration: plugin panel and a supported Adobe API bridge (API/version compatibility must be investigated and proven before implementation). Do not assume XML can express every effect.

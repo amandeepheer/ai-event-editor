@@ -5,7 +5,7 @@ A practical reference for setting up and using the project, including after a lo
 **Project:** [amandeepheer/ai-event-editor](https://github.com/amandeepheer/ai-event-editor)  
 **Use this branch:** `main`  
 **Guide updated:** 4 November 2026  
-**Current release in the repository:** development preview, version 0.4.0
+**Current release in the repository:** development preview, version 0.5.0
 
 > The automated tests passed, but this preview has not yet been verified inside installed Windows/Premiere Pro. A basic installer preview is available through a successful Windows build; it is not a verified production release. Test with a small copy of an event project before using it for a client delivery.
 
@@ -14,6 +14,21 @@ A practical reference for setting up and using the project, including after a lo
 The main goal is to prepare an event highlight **inside Adobe Premiere Pro**, then let you continue editing and export normally in Premiere.
 
 The intended direction is to control Premiere's native editing tools from your instructions, with editable clips, effects, transitions and keyframes. [Native capability audit](docs/PREMIERE_NATIVE_AUDIT.md) lists what Adobe exposes, what our plugin implements and the remaining manual steps. In the updated panel, **Native Premiere tools > Check native tools** reads the installed APIs/catalogs without changing your project. **Save tool report** saves that inventory locally; it does not prove that editing operations work.
+
+## Use imported Project panel media (version 0.5)
+
+1. Import videos and music into Premiere's **Project panel**. Select source clips or bins containing them. No sequence or timeline placement is needed.
+2. Connect the plugin to the local helper, then click **Use selected project media**. It includes nested bins and lists skipped/unreadable items. This replaces the source pool.
+3. One audio-only file is selected as music. If several are found, choose one in **Music from selected project audio**, or choose **No music**. Set the excerpt start/end if needed.
+4. Type `Use these clips and this music to make a one-minute energetic highlight`. If no music is chosen, omit `and this music`.
+5. Click **Build reviewed edit**. It prepares moments automatically if needed. For more control, use **Prepare moments** first and choose Keep/Reject/Must include.
+6. Review the summary, tick **Create a new sequence**, then click **Create Premiere sequence**. Clips and the chosen music excerpt remain editable. Save/export normally in Premiere.
+
+If the source pool is empty, Build also attempts to read the current Project panel selection. Once captured, changing the selection does not silently change an edit; use the selection button again. A captured pool is tied to its active project; switch projects and you must capture the media again.
+
+This preview uses whole linked files, not source In/Out marks or subclip boundaries. Source effects, proxies and interpretation overrides are not transferred to fresh source references. Original project items and sequences are preserved; new source references/subclips may appear, but original files are not copied on disk. Video source audio is currently omitted; the selected audio-only file supplies music. Sources are eligible, not guaranteed to all appear; Must include pins reviewed moments. Merged/multicam items, sequences, offline files and still images are unsupported sources.
+
+Project panel selection and native sequence creation still need installed-Premiere verification. Automated tests cover Adobe API doubles, real local classification/preparation/build and Windows packaging. Effects, transitions, retiming and automatic reframing remain unfinished.
 
 | Part | What it means | Do I need to open it? |
 | --- | --- | --- |

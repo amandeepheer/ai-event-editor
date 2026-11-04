@@ -9,21 +9,22 @@ This is an integrated development preview, not a verified installer release. Aut
 1. Install Python 3.10+ and FFmpeg (including FFprobe) on PATH. From the repository directory run `python -m pip install -e .`.
 2. Run `scripts/Configure-Premiere-Autostart.cmd` once (or `python -m ai_event_editor.service --configure-plugin`). It creates a user-local launcher and `engine-connection.json`, and prints the file location. Python for Windows must include `pythonw.exe`.
 3. Load `premiere-plugin/` through Adobe UXP Developer Tool and open a Premiere project. Click **Set up automatic start**, select the generated `engine-connection.json` and allow Adobe’s launch request if shown. Adobe can remember the permission choice. The panel remembers the selected configuration using a UXP persistent file token. On subsequent opens it reconnects to a running helper or starts it, then waits for readiness. Manual code pairing remains a fallback. Port 8765 is fixed; incompatible/unauthorized services on that port produce errors rather than automatic relaunches.
-4. **Add footage**, **Choose music**, set music start/end, output length (30–300 seconds), style and pacing. **Preview in Premiere** opens source media in Premiere's Source Monitor at the selected time. Playback stays under Premiere's controls; the displayed end time is a review guide, not a playback lock.
+4. Import videos/audio into Premiere's Project panel, select source clips or bins and choose **Use selected project media**. No sequence is needed. The helper separates videos and audio-only music candidates; choose one music file when several are found. Set excerpt start/end, length (30–300 seconds), style and pacing. **Add footage** / **Choose music** file pickers remain available. **Preview in Premiere** opens source media in Source Monitor.
 5. Click **Prepare moments**. The default creates unranked windows and local thumbnails. Optional cached CLIP suggestions require vision extras and already downloaded model weights; the panel does not download a model.
 6. Review thumbnails, preview moments, correct categories and choose Keep, Reject or Must include. Reviews are paginated to keep the panel usable with larger events. Keep is eligible; Must include guarantees an excerpt from the moment when it fits.
-7. Type an optional instruction and click **Review instructions** to inspect supported changes. **Build reviewed edit** sends the current choices to the local engine, applies supported instructions and displays the plan summary. It does not change Premiere's timeline.
+7. Type an optional instruction and click **Review instructions** to inspect supported changes. **Build reviewed edit** applies supported instructions and displays the plan summary. Steps 5–6 are optional: Interpret/Build prepare moments automatically when no review session exists; if the source pool is empty they first read the current Project panel selection. Multiple music candidates require a choice before analysis. Building a plan does not change Premiere's timeline.
 8. Confirm **Create a new sequence**, then click **Create Premiere sequence**. Individual clips and the selected music excerpt are assembled in a new sequence. Continue editing and export in Premiere. Default Premiere preset geometry is used, so inspect framing.
 
 Native creation and Source Monitor seeking require Premiere 26.3+ and still need testing in an installed Premiere environment. Earlier compatible UXP hosts can retain inspect/validate functions. Source files, existing sequences and source marks are not overwritten. Failure can leave newly imported items or a partial new sequence for review; nothing is automatically deleted or saved.
 
-A packaged installer and automatic review-session recovery are not implemented. Automatic helper startup and restored pairing now use the one-time setup above; actual Windows/Adobe launch and permission behavior still requires installed-host verification. Review state lives in the open panel and bounded helper sessions. Save the final edit with **Save edit** before closing; **Open saved edit** and legacy JSON validation remain available. Standalone review sessions and the standalone editor remain available separately.
+A packaged Windows installer is available; see the main README for the latest successful build. Automatic review-session recovery is not implemented. Automatic helper startup and restored pairing use the one-time setup above; actual Adobe launch/permission behavior still requires installed-host verification. Review state lives in the open panel and bounded helper sessions. Save the final edit with **Save edit** before closing; **Open saved edit** and standalone review sessions remain available.
 
 ## Supported typed instructions
 
 The default interpreter is a deterministic offline parser. The AI Edition optionally uses local Ollama/Qwen for broader phrasing, translated into validated supported settings; see `AI_ADDON.md`. Supported examples:
 
 - `Make a one-minute cinematic recap with energetic pacing.`
+- `Use these clips and this music to make a one-minute energetic highlight.` (Choose music first.)
 - `Create a 30-second wedding highlight with calm pacing.`
 - `Make a 2-minute concert recap with balanced pacing.`
 - `Include crowd. Exclude stalls.`
@@ -42,7 +43,9 @@ Every endpoint requires the pairing token in an Authorization header. Tokens are
 
 Long operations run in one background worker with status polling; concurrent operations are rejected. Completed job metadata is bounded to 16 jobs and four review sessions. Expired sessions produce a message to prepare footage again. Temporary thumbnails are removed when the helper shuts down. A disconnected panel does not automatically resubmit processing or mutate a timeline.
 
-Endpoints (all under `/v1`): health, prepare, interpret, build and jobs/{id}. Prepare/build return job IDs; interpret returns proposed supported changes and unsupported requests. Source ranges remain authoritative in the helper and only decision/category patches are accepted.
+Endpoints (all under `/v1`): health, project-media, prepare, interpret, interpret-local, build and jobs/{id}. Project-media probes up to 2000 absolute local paths and returns video/audio candidates and per-file issues. Album artwork is not treated as footage. Project-media/prepare/build/interpret-local return job IDs. Source ranges remain authoritative in the helper; only decision/category review patches are accepted.
+
+Project selection reads `ProjectUtils.getSelection(project).getItems()` and nested `FolderItem.getItems()` without requiring an active sequence. Offline, sequence, merged/multicam and unreadable items are disclosed. Whole linked files are used, not source marks/subclip bounds or source effects/proxy/interpretation overrides. The current adapter reimports source references in its own bin; original files/items are preserved. A captured selection replaces the source pool and is guarded by the project GUID before build and sequence creation. Changing selection alone does not change the pool; capture again explicitly.
 
 ## Remaining verification
 

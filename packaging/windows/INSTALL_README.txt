@@ -1,4 +1,4 @@
-AI EVENT EDITOR - AI EDITION / ADD-ON PREVIEW 0.4.0
+AI EVENT EDITOR - AI EDITION / ADD-ON PREVIEW 0.5.0
 
 This installer includes the updated basic program plus a managed Python runtime
 for optional AI packages. It can replace the earlier basic installer; no separate
@@ -35,8 +35,18 @@ OPTIONAL LOCAL LANGUAGE UNDERSTANDING
    is restricted to supported settings and must be reviewed. No cloud-model or
    paid API fallback is used. Requests for unfinished effects remain blocked.
 
-Basic workflow: add footage/music, choose length/style/pacing, prepare and review
-moments, type optional instructions, build, then confirm a NEW Premiere sequence.
+Project-panel workflow: import videos/audio into Premiere's Project panel.
+Select clips or bins, then click "Use selected project media" in our panel.
+No existing timeline is needed. Choose a music file if several audio files are
+found, or choose No music. Type supported instructions, for example:
+"Use these clips and this music to make a one-minute energetic highlight".
+Click Build reviewed edit; it prepares footage automatically if needed. Review
+the summary and confirm a NEW Premiere sequence. You can prepare/review moments
+first for Keep/Reject/Must include. File pickers remain available.
+Whole linked files are used, not source marks, subclip bounds, effects or
+proxy/interpretation overrides. New project references may be added; original
+files are not copied on disk. Video source sound is omitted; choose a separate
+music file. Offline/unsupported items are reported.
 Finish and export normally in Premiere. Save your Premiere project normally.
 
 Not implemented: actual slow motion/speed ramps, visual effects, native titles,

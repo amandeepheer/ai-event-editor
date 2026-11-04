@@ -16,6 +16,12 @@ def interpret(text, setup, candidates):
     reviewed_shots(shots)
     remaining = text.lower().replace('—',' ').replace('–',' ')
     applied, unsupported = [], []
+    # References to the already chosen media pool are not new editing actions.
+    # Do not discard "all": using every source clip is not guaranteed by planning.
+    remaining = re.sub(r'\b(?:use|using)\s+(?:these|selected|the selected)\s+(?:project\s+)?(?:clips|videos|footage)\b', ' ', remaining)
+    if re.search(r'\b(?:this|selected|the selected)\s+music\b', remaining):
+        if not setup.music: unsupported.append('Choose a music file before requesting this music')
+        remaining = re.sub(r'\b(?:this|selected|the selected)\s+music\b', ' ', remaining)
     # Explicitly requested unsupported features block creation instead of disappearing.
     remaining = re.sub(r'\b(?:no|without|avoid)\s+(?:slow[ -]?motion|speed ramps?|effects?|transitions?)\b', ' ', remaining)
     for expression, label in [

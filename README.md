@@ -8,7 +8,7 @@ Local-first event highlight editing with one shared Python engine, a Windows-fri
 
 ## Windows AI Edition installer preview
 
-The [Windows installer workflow](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml) builds **AI-Event-Editor-AI-Setup-0.4.0-Windows-x64.exe**, available in its successful **AI-Event-Editor-AI-Installer** artifact. Extract the download and run Setup. No system Python or terminal commands are needed. Artifacts expire after 30 days; use the latest passing build.
+The [Windows installer workflow](https://github.com/amandeepheer/ai-event-editor/actions/workflows/windows-installer.yml) builds **AI-Event-Editor-AI-Setup-0.5.0-Windows-x64.exe**, available in its successful **AI-Event-Editor-AI-Installer** artifact. Extract the download and run Setup. No system Python or terminal commands are needed. Artifacts expire after 30 days; use the latest passing build.
 
 The updated installer includes the basic engine, setup/status app, Adobe CCX panel and an isolated Python runtime for optional AI. Finish basic setup, install the Adobe panel, then optionally install CLIP (CPU or NVIDIA) through Setup and Status. Optional Ollama and Qwen download buttons enable broader local interpretation when selected in the panel. Downloads can be several GB; they are explicit setup operations and are not silently performed when the panel opens.
 
@@ -35,7 +35,11 @@ The existing manual plan renderer is still available through **Render an existin
 
 On Windows, run `scripts/Configure-Premiere-Autostart.cmd` once. Load `premiere-plugin/` with Adobe UXP Developer Tool, click **Set up automatic start** and select the generated `engine-connection.json`. The panel remembers the connection and starts or reconnects to the background helper when opened. Adobe may show a launch-permission dialog, with an option to remember your choice. Manual startup and code pairing remain available as a fallback.
 
-Inside the panel: **Add footage → choose music/length/style → Prepare moments → review thumbnails and Keep/Reject/Must include → type supported instructions → Build reviewed edit → Create Premiere sequence**. Source and music previews open in Premiere's Source Monitor. Continue editing and export with Premiere's normal tools. There is no requirement to open the standalone editor or transfer JSON files.
+Import videos and audio into Premiere's **Project panel**, select clips or bins, then click **Use selected project media** in the plugin. Choose a music file if several audio files were found, type supported instructions and click **Build reviewed edit**. Footage is prepared automatically if needed; no existing sequence or manual timeline placement is required. Review the proposed edit and confirm **Create Premiere sequence**. You can also use **Prepare moments** first for Keep/Reject/Must include review. The file-picker workflow remains available.
+
+Nested bins are included; duplicate source paths are used once. Offline, merged/multicam, sequence and unreadable items are reported. Refresh the selection explicitly when it changes; capturing replaces the source pool. One audio-only file is selected as music; with several files, choose one or No music. Video sound is not automatically used as music.
+
+This preview uses whole linked files and assembles fresh source subclips in a new bin/sequence. It does not copy source In/Out marks, subclip restrictions, proxy/interpretation overrides or source effects. It may add duplicate project-item references but does not copy footage on disk. Changing the active project blocks a captured project-media edit until you select media again. No standalone editor or JSON transfer is required.
 
 Typed instructions currently support duration, pacing, style and explicit include/exclude category commands, for example `Make a one-minute cinematic recap with energetic pacing`. The default is an offline rules interpreter. Optional local Ollama/Qwen can translate broader phrasing into the same bounded settings, with validation and human review. Unknown instructions and requests for unfinished features are shown before generation rather than silently dropped.
 

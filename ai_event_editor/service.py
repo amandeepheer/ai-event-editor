@@ -41,7 +41,7 @@ class Engine:
                 'ffmpeg': bool(shutil.which('ffmpeg')), 'ffprobe': bool(shutil.which('ffprobe')),
                 'busy': self.active is not None,
                 'instructions': ['duration','pacing','style','include category','exclude category'],
-                'native_host_verified': False, 'vision_available': vision}
+                'native_host_verified': False, 'vision_available': vision, 'project_media_available': True}
 
     def submit(self, task):
         with self.lock:
@@ -73,6 +73,31 @@ class Engine:
         with self.lock:
             if identifier not in self.jobs: raise KeyError('Job not found or expired')
             return deepcopy(self.jobs[identifier])
+
+    def project_media(self, data):
+        paths = data.get('paths')
+        if not isinstance(paths,list) or not 1 <= len(paths) <= 2000 or any(not isinstance(p,str) or not Path(p).is_absolute() for p in paths):
+            raise ValueError('Select 1–2000 local project media files with absolute paths')
+        paths = list(dict.fromkeys(paths))
+        def task(progress):
+            from .media import probe
+            from math import isfinite
+            videos, audio, errors = [], [], []
+            for index, path in enumerate(paths):
+                progress(f'Inspecting project media {index+1}/{len(paths)}')
+                try:
+                    info = probe(path)
+                    if not isfinite(info['duration']) or info['duration'] <= 0:
+                        raise ValueError('No finite-duration video/audio; still images are not supported')
+                    kinds = {s.get('codec_type') for s in info['streams'] if not s.get('disposition',{}).get('attached_pic')}
+                    record = {'path':info['path'],'name':Path(info['path']).name,'duration':info['duration']}
+                    if 'video' in kinds: videos.append(record)
+                    elif 'audio' in kinds: audio.append(record)
+                    else: raise ValueError('No video or audio stream')
+                except Exception as error:
+                    errors.append(f'{Path(path).name}: {error}')
+            return {'videos':videos,'audio':audio,'errors':errors}
+        return self.submit(task)
 
     def prepare(self, data):
         paths = data.get('paths')
@@ -203,6 +228,7 @@ def handler(engine):
                 data=json.loads(self.rfile.read(size),parse_constant=lambda x:(_ for _ in ()).throw(ValueError('Nonfinite JSON number')))
                 if not isinstance(data,dict): raise ValueError('Request must be an object')
                 if self.path=='/v1/prepare': result=engine.prepare(data)
+                elif self.path=='/v1/project-media': result=engine.project_media(data)
                 elif self.path=='/v1/interpret-local': result=engine.interpret_job(data)
                 elif self.path=='/v1/interpret':
                     parsed=engine.request(data)

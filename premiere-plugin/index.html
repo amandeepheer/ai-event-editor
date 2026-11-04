@@ -7,7 +7,9 @@
 <div class="actions"><button id="connect">Connect</button><button id="inspect" class="secondary">Inspect Premiere</button></div>
 </section>
 <section><h2>1 · Footage & music</h2>
+<button id="use-project-media">Use selected project media</button><p class="hint">Import into Premiere’s Project panel, select videos/audio or bins, then use the selection here. No existing timeline is needed. Build can prepare the footage automatically. Refresh this selection explicitly when it changes.</p><pre id="project-media-report"></pre>
 <div class="actions"><button id="add-footage">Add footage</button><button id="clear-footage" class="secondary">Clear</button></div><p id="footage-summary">No clips selected</p>
+<div id="project-music-field" hidden><label for="project-music">Music from selected project audio</label><select id="project-music"><option value="">No music</option></select></div>
 <div class="actions"><button id="choose-music" class="secondary">Choose music</button><button id="clear-music" class="secondary">No music</button><button id="preview-music" class="secondary">Preview in Premiere</button></div><p id="music-summary">Music optional</p>
 <div class="row"><div><label for="audio-start">Music start (seconds)</label><input id="audio-start" type="number" value="0" min="0" step="0.1"></div><div><label for="audio-end">End (optional)</label><input id="audio-end" type="number" min="0" step="0.1" placeholder="Start + edit length"></div></div>
 <label for="duration-preset">Edit length</label><select id="duration-preset"><option value="30">30 seconds</option><option value="60" selected>1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option><option value="custom">Custom</option><option value="auto">Auto (not available yet)</option></select>

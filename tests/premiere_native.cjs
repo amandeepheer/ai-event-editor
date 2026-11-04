@@ -17,6 +17,7 @@ function host(options={}) {
     return item;
   }
   const project={
+    guid:{toString:()=> 'project-a'},
     getRootItem:async()=>root,
     lockedAccess(callback){assert(!locked);locked=true;try{callback();}finally{locked=false;}},
     executeTransaction(callback,label){assert(locked);const pending=[];callback({addAction:a=>pending.push(a)});
@@ -60,6 +61,11 @@ function plan() {
   assert.equal(JSON.stringify(p),copy);assert.equal(h.imports[0].paths.length,2);
   await applyNewSequence(h.ppro,plan());assert.equal(h.sequences.length,2);
   assert.notEqual(h.sequences[0].name,h.sequences[1].name);
+  const wrong=host();
+  await assert.rejects(()=>applyNewSequence(wrong.ppro,plan(),()=>{},{expectedProjectId:'project-b'}),/project changed/);
+  assert.equal(wrong.root.items.length,0);assert.equal(wrong.imports.length,0);assert.equal(wrong.sequences.length,0);
+  const same=host();await applyNewSequence(same.ppro,plan(),()=>{},{expectedProjectId:'project-a'});
+  assert.equal(same.sequences.length,1);
   for(const bad of ['ramp','relative','title','audio']){
     const mock=host();const data=plan();
     if(bad==='ramp')data.segments[0].speed_effect={kind:'ramp',speed:1};

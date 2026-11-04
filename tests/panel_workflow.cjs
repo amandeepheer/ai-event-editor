@@ -17,7 +17,7 @@ const all=()=>{const result=[];const add=e=>{result.push(e);e.children.forEach(a
 global.document={getElementById:id=>{assert(elements[id],'Missing HTML element: '+id);return elements[id];},
   createElement:tag=>new Element(tag),querySelectorAll:()=>all().filter(e=>['button','input','select','textarea'].includes(e.tagName))};
 elements['duration-preset'].value='60';elements['custom-seconds'].value='90';elements['audio-start'].value='0';elements.style.value='energetic-event';elements.pacing.value='Balanced';
-const requests=[];let currentPlan=null;let buildFailure=false;let version=1;
+const requests=[];let currentPlan=null;let buildFailure=false;let version=1;let projectId='project-a';let projectAudioCount=2;
 const candidates=Array.from({length:14},(_,i)=>({id:String(i),path:'C:/event'+i+'.mp4',start:0,end:4,category:'performance',quality:.5,decision:'keep',model:'manual-review',thumbnail_data:'data:image/png;base64,AA=='}));
 function makePlan(){return {schema_version:1,fps:25,duration_frames:750,segments:[{path:'C:/event1.mp4',timeline_start:0,duration_frames:750,source_in_seconds:0}]};}
 global.fetch=async(url,options)=>{
@@ -25,8 +25,10 @@ global.fetch=async(url,options)=>{
   assert.equal(options.headers.Authorization,'Bearer paired-secret');assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');
   const path=url.split('/v1/')[1];const body=options.body?JSON.parse(options.body):null;requests.push({path,body});
   let status=200,result;
-  if(path==='health')result={engine:'AI Event Editor',api_version:version,ffmpeg:true,ffprobe:true};
+  if(path==='health')result={engine:'AI Event Editor',api_version:version,ffmpeg:true,ffprobe:true,project_media_available:true};
   if(path==='prepare')result={job_id:'a'.repeat(32)};
+  if(path==='project-media')result={job_id:'c'.repeat(32)};
+  if(path==='jobs/'+'c'.repeat(32))result={status:'completed',result:{videos:[{path:'C:/event1.mp4',name:'event1.mp4'}],audio:Array.from({length:projectAudioCount},(_,i)=>({path:'C:/music'+i+'.wav',name:'music'+i+'.wav'})),errors:[]}};
   if(path==='jobs/'+'a'.repeat(32))result={status:'completed',result:{session_id:'review',candidates:JSON.parse(JSON.stringify(candidates)),errors:[],analysis:'Unranked'}};
   if(path==='interpret')result={setup:{...body.setup,duration:30,pacing:'Energetic'},candidates:body.review,applied:['Pacing: Energetic'],unsupported:[]};
   if(path==='build'){if(buildFailure){status=400;result={error:'Slow motion is not implemented yet'};}else{currentPlan=makePlan();result={job_id:'b'.repeat(32)};}}
@@ -35,7 +37,11 @@ global.fetch=async(url,options)=>{
 };
 const pickers=[];const saved=[];const previews=[];
 const uxp={entrypoints:{setup(){}},storage:{localFileSystem:{getFileForOpening:async()=>pickers.shift(),getFileForSaving:async()=>({write:async text=>saved.push(text)})}}};
-const ppro={Project:{getActiveProject:async()=>({getActiveSequence:async()=>({name:'Existing client edit'})})},
+const projectSource=path=>({name:path,getMediaFilePath:async()=>path,isOffline:async()=>false,isSequence:async()=>false,isMergedClip:async()=>false,isMulticamClip:async()=>false});
+const selection=[projectSource('C:/event1.mp4'),projectSource('C:/music0.wav'),projectSource('C:/music1.wav')];
+const ppro={Project:{getActiveProject:async()=>({guid:{toString:()=>projectId},getActiveSequence:async()=>({name:'Existing client edit'})})},
+  ProjectUtils:{getSelection:async()=>({getItems:async()=>selection})},
+  FolderItem:{cast:()=>{throw Error('not a bin');}},ClipProjectItem:{cast:item=>item},
   SourceMonitor:{openFilePath:async path=>{previews.push(path);return true;},setPosition:async time=>{previews.push(time.seconds);return true;}},TickTime:{createWithSeconds:seconds=>({seconds})}};
 const Module=require('node:module');const original=Module._load;
 Module._load=function(name,parent,isMain){if(name==='uxp')return uxp;if(name==='premierepro')return ppro;return original.call(this,name,parent,isMain);};
@@ -73,6 +79,23 @@ const click=id=>elements[id].fire('click');
   assert.equal(JSON.parse(saved[1]).scope,'API presence only; no editing operations tested');
   await click('clear-music');assert.equal(panel.state.music,'');
   await click('clear-footage');assert.equal(panel.state.candidates.length,0);assert.equal(panel.state.session,null);
+  buildFailure=false;elements.instruction.value='Make a 30-second energetic highlight';
+  await click('use-project-media');assert.equal(panel.state.projectId,'project-a');
+  assert.deepEqual(panel.state.paths,['C:/event1.mp4']);assert.equal(panel.state.session,null);
+  assert.equal(panel.state.musicPending,true);
+  const preparesBefore=requests.filter(r=>r.path==='prepare').length;
+  await click('build');assert(elements.status.textContent.includes('Choose one project audio'));
+  assert.equal(requests.filter(r=>r.path==='prepare').length,preparesBefore);
+  elements['project-music'].value='1';await elements['project-music'].fire('change');
+  await click('build');assert(panel.state.plan);
+  assert.equal(requests.filter(r=>r.path==='prepare').length,preparesBefore+1);
+  assert.equal(requests.filter(r=>r.path==='build').at(-1).body.setup.music,'C:/music1.wav');
+  projectId='project-b';await click('build');assert(elements.status.textContent.includes('project changed'));assert.equal(panel.state.plan,null);
+  projectId='project-a';await click('clear-footage');await click('clear-music');
+  // Build from a blank panel captures the Project panel selection without a file picker.
+  projectAudioCount=1;await click('build');assert(panel.state.plan);assert.equal(panel.state.music,'C:/music0.wav');
+  assert.equal(panel.state.musicPending,false);
+  assert.equal(pickers.length,0);
   elements['duration-preset'].value='auto';assert.throws(()=>panel.selectedDuration(),/not available/);
   version=2;await click('connect');assert(elements.status.textContent.includes('Incompatible'));
   Module._load=original;

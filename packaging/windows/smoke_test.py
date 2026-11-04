@@ -46,16 +46,23 @@ def main():
                     if result['status']=='failed':raise RuntimeError(result['error'])
                     time.sleep(.5)
                 raise RuntimeError('Packaged operation timed out')
-            prepared=wait(call('prepare',{'paths':[str(source)]}))
+            music=Path(temporary)/'music.wav'
+            subprocess.run([str(ffmpeg),'-v','error','-y','-f','lavfi','-i','sine=frequency=440:sample_rate=8000:duration=36',str(music)],check=True)
+            assert health['project_media_available'] is True
+            selected=wait(call('project-media',{'paths':[str(source),str(music)]}))
+            assert len(selected['videos'])==1 and len(selected['audio'])==1 and not selected['errors']
+            prepared=wait(call('prepare',{'paths':[v['path'] for v in selected['videos']]}))
             assert len(prepared['candidates'])==9
-            edit=wait(call('build',{'session_id':prepared['session_id'],'setup':{},'instruction':'Make a 30-second cinematic recap'}))
+            edit=wait(call('build',{'session_id':prepared['session_id'],'setup':{'music':str(music)},'instruction':'Use these clips and this music to make a 30-second cinematic recap'}))
             assert edit['plan']['duration_frames']==750
+            assert edit['plan']['audio']['path']==str(music)
             assert source.is_file()
         finally:process.terminate();process.wait(timeout=20)
     with zipfile.ZipFile(app/'AIEventEditor-Premiere.ccx') as package:
         manifest=json.loads(package.read('manifest.json'))
         assert manifest['host']['app']=='premierepro'
+        assert 'project-media.js' in package.namelist()
         assert package.testzip() is None
-    print('PASS: silent installer, bundled Python runtime, media download/checksum, frozen helper HTTP, thumbnails, typed build and CCX structure. Native Adobe installation not tested.')
+    print('PASS: silent installer, bundled Python runtime, media download/checksum, frozen helper HTTP, project-media video/audio classification, thumbnails, typed music build and CCX structure. Native Adobe selection and timeline creation not tested.')
 
 if __name__=='__main__':main()
